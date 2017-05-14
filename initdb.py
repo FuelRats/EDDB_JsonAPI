@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, transaction
 from datetime import time, datetime, timedelta
 
 from odo import odo, dshape
@@ -9,8 +9,9 @@ from pyramid.paster import (
     setup_logging,
 )
 from sqlalchemy import engine_from_config
+from zope.sqlalchemy import mark_changed
 
-from galmap2.models import (
+from eddb_jsonapi.mymodels import (
     DBSession,
     System,
     Body,
@@ -19,6 +20,7 @@ from galmap2.models import (
     Faction,
     Station,
     Listing)
+
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
@@ -66,13 +68,16 @@ def main(argv=sys.argv):
 
     print("Uppercasing system names...")
     DBSession.execute("UPDATE systems set name = UPPER(name)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
 
     print("Creating indexes...")
     DBSession.execute("create index index_system_names_trigram on systems using gin(name gin_trgm_ops)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
     DBSession.execute("create index index_system_names_btree on systems (name)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
     print("Done!")
 
 
@@ -99,7 +104,8 @@ def main(argv=sys.argv):
     t = odo('jsonlines://factions.json', url, dshape=ds)
     print("Done!")
     DBSession.execute("create index factions_idx on factions(id)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
 
     #
     # Populated Systems
@@ -130,13 +136,16 @@ def main(argv=sys.argv):
 
     print("Uppercasing system names...")
     DBSession.execute("UPDATE populated_systems set name = UPPER(name)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
     print("Creating indexes...")
     DBSession.execute("CREATE index index_populated_system_names_trigram on populated_systems "
                       "using gin(name gin_trgm_ops)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
     DBSession.execute("CREATE index index_populated_system_names_btree on systems (name)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
 
     print("Done!")
 
@@ -175,9 +184,11 @@ def main(argv=sys.argv):
     t = odo('jsonlines://bodies.json', url, dshape=ds)
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX bodies_idx on bodies(name text_pattern_ops)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
     DBSession.execute("CREATE INDEX systemid_idx on bodies(system_id)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
     print("Done!")
 
     #
@@ -214,9 +225,11 @@ def main(argv=sys.argv):
 
     print("Creating indexes...")
     DBSession.execute("CREATE index index_stations_systemid_btree on stations(system_id)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
     DBSession.execute("CREATE index index_stations_btree on stations(id)")
-    DBSession.flush()
+    mark_changed(DBSession())
+    DBSession.commit()
     print("Done!")
 
     #
