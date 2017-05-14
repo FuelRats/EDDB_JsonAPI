@@ -3,17 +3,12 @@ from pyramid.view import view_config
 
 from sqlalchemy.exc import DBAPIError
 
-from ..models import MyModel
+from .. import mymodels
 
 
 @view_config(route_name='home', renderer='../templates/mytemplate.jinja2')
 def my_view(request):
-    try:
-        query = request.dbsession.query(MyModel)
-        one = query.filter(MyModel.name == 'one').first()
-    except DBAPIError:
-        return Response(db_err_msg, content_type='text/plain', status=500)
-    return {'one': one, 'project': 'EDDB_JsonAPI'}
+    return {'one': 'This message here solely to satisfy the angry framework-change gods.', 'project': 'EDDB_JsonAPI'}
 
 
 db_err_msg = """\
