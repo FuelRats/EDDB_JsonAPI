@@ -17,6 +17,7 @@ def main(global_config, **settings):
     mymodels.Base.metadata.bind = engine
     config = Configurator(settings=settings)
     config.include('pyramid_chameleon')
+    config.include('pyramid_jinja2')
     config.set_session_factory(session_factory)
     config.include('pyramid_beaker')
     config.add_static_view('static', 'static', cache_max_age=3600)
