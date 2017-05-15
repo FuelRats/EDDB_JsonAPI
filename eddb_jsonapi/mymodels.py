@@ -214,7 +214,7 @@ class System(Base):
     power_state = Column(Text)
     power_state_id = Column(Integer)
     needs_permit = Column(Integer)
-    updated_at = Column(Integer)
+    updated_at = Column(BigInteger)
     simbad_ref = Column(Text)
     controlling_minor_faction_id = Column(Integer)
     controlling_minor_faction = Column(Text)
