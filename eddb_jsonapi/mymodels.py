@@ -136,7 +136,7 @@ class Station(Base):
     selling_ships = Column(JSONB)
     selling_modules = Column(JSONB)
     settlement_size_id = Column(Integer)
-    settlement_size = Column(BigInteger)
+    settlement_size = Column(Text)
     settlement_security_id = Column(Integer)
     settlement_security = Column(Text)
     body_id = Column(BigInteger, ForeignKey('bodies.id'))
