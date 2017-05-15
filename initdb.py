@@ -218,10 +218,10 @@ def main(argv=sys.argv):
                 "import_commodities: ?json,  export_commodities: ?json,  prohibited_commodities: ?json, "
                 "economies: ?json, shipyard_updated_at: ?int64, outfitting_updated_at: ?int64, "
                 "market_updated_at: ?int64, is_planetary: ?bool, selling_ships: ?json, "
-                "selling_modules: ?json, settlement_size_id: ?int64, settlement_size: ?int64, "
+                "selling_modules: ?json, settlement_size_id: ?text, settlement_size: ?int64, "
                 "settlement_security_id: ?int64, settlement_security: ?string, body_id: ?int64,"
                 "controlling_minor_faction_id: ?int64 }")
-    t = odo('jsonlines://systems_populated.json', url, dshape=ds)
+    t = odo('jsonlines://stations.json', url, dshape=ds)
 
     print("Creating indexes...")
     DBSession.execute("CREATE index index_stations_systemid_btree on stations(system_id)")
@@ -250,10 +250,10 @@ def main(argv=sys.argv):
     url = str(engine.url) + "::" + Listing.__tablename__
     ds = dshape("var *{  id: ?int64, station_id: ?int64, commodity: ?int64, supply: ?int64, "
                 "buy_price: ?int64, sell_price: ?int64, demand: ?int64, collected_at: ?int64 }")
-    t = odo('jsonlines://listings.csv', url, dshape=ds)
+    t = odo('listings.csv', url, dshape=ds)
 
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX index_listings_stationid_btree on listings(station_id)")
     mark_changed(DBSession())
     transaction.commit()
-    main()
+main()
