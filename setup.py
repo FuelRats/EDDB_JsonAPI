@@ -15,7 +15,7 @@ requires = [
     'pyramid_debugtoolbar',
     'waitress',
     'sqlalchemy',
-    'zope.sqlalchemy', 'requests', 'odo', 'colander', 'deform', 'wsgicors', 'pyramid_jsonapi',
+    'zope.sqlalchemy', 'requests', 'odo', 'wsgicors', 'pyramid_jsonapi',
     'psycopg2', 'odo', 'pyramid_beaker', 'aiopyramid', 'gunicorn'
     ]
 
@@ -26,7 +26,7 @@ tests_require = [
     ]
 
 setup(name='EDDB_JsonAPI',
-      version='0.0',
+      version='0.1',
       description='EDDB_JsonAPI',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
@@ -50,6 +50,6 @@ setup(name='EDDB_JsonAPI',
       [paste.app_factory]
       main = eddb_jsonapi:main
       [console_scripts]
-      initialize_EDDB_JsonAPI_db = eddb_jsonapi.scripts.initializedb:main
+      initialize_EDDB_JsonAPI_db = eddb_jsonapi.initdb:main
       """,
       )
