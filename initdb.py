@@ -69,15 +69,15 @@ def main(argv=sys.argv):
     print("Uppercasing system names...")
     DBSession.execute("UPDATE systems set name = UPPER(name)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
 
     print("Creating indexes...")
     DBSession.execute("create index index_system_names_trigram on systems using gin(name gin_trgm_ops)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
     DBSession.execute("create index index_system_names_btree on systems (name)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
     print("Done!")
 
 
@@ -105,7 +105,7 @@ def main(argv=sys.argv):
     print("Done!")
     DBSession.execute("create index factions_idx on factions(id)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
 
     #
     # Populated Systems
@@ -137,15 +137,15 @@ def main(argv=sys.argv):
     print("Uppercasing system names...")
     DBSession.execute("UPDATE populated_systems set name = UPPER(name)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
     print("Creating indexes...")
     DBSession.execute("CREATE index index_populated_system_names_trigram on populated_systems "
                       "using gin(name gin_trgm_ops)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
     DBSession.execute("CREATE index index_populated_system_names_btree on systems (name)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
 
     print("Done!")
 
@@ -185,10 +185,10 @@ def main(argv=sys.argv):
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX bodies_idx on bodies(name text_pattern_ops)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
     DBSession.execute("CREATE INDEX systemid_idx on bodies(system_id)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
     print("Done!")
 
     #
@@ -226,15 +226,34 @@ def main(argv=sys.argv):
     print("Creating indexes...")
     DBSession.execute("CREATE index index_stations_systemid_btree on stations(system_id)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
     DBSession.execute("CREATE index index_stations_btree on stations(id)")
     mark_changed(DBSession())
-    DBSession.commit()
+    transaction.commit()
     print("Done!")
 
     #
     # Listings
     #
     # TODO: Finish adding Listings
+    if os.path.isfile('listings.csv'):
+        if datetime.fromtimestamp(os.path.getmtime('listings.csv')) > datetime.today()-timedelta(days=7):
+            print("Using cached listings.csv")
+    else:
+        print("Downloading listings.csv from EDDB.io...")
+        r = requests.get("https://eddb.io/archive/v5/listings.csv", stream=True)
+        with open('listings.csv', 'wb') as f:
+            for chunk in r.iter_content(chunk_size=4096):
+                if chunk:
+                    f.write(chunk)
+        print("Saved listings.csv. Converting CSV to SQL.")
+    url = str(engine.url) + "::" + Listing.__tablename__
+    ds = dshape("var *{  id: ?int64, station_id: ?int64, commodity: ?int64, supply: ?int64, "
+                "buy_price: ?int64, sell_price: ?int64, demand: ?int64, collected_at: ?int64 }")
+    t = odo('jsonlines://listings.csv', url, dshape=ds)
 
-main()
+    print("Creating indexes...")
+    DBSession.execute("CREATE INDEX index_listings_stationid_btree on listings(station_id)")
+    mark_changed(DBSession())
+    transaction.commit()
+    main()
