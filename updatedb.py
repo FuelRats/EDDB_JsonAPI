@@ -102,7 +102,7 @@ def main(argv=sys.argv):
             if chunk:
                 f.write(chunk)
     print("Saved systems_recently.csv. Creating temporary table and importing.")
-    DBSession.execute("CREATE TEMP TABLE systems_tmp ON COMMIT DROP AS SELECT * FROM systems WITH NO DATA")
+    DBSession.execute("CREATE TEMP TABLE systems_tmp (LIKE systems)")
     url = str(engine.url) + "::systems_tmp"
     ds = dshape("var *{  id: ?int64,  edsm_id: ?int64,  name: ?string,  x: ?float64,  y: ?float64,  "
                 "z: ?float64,  population: ?int64,  is_populated: ?bool,  government_id: ?int64,  "
@@ -114,7 +114,7 @@ def main(argv=sys.argv):
                 "controlling_minor_faction: ?string,  reserve_type_id: ?float64,  reserve_type: ?string  }")
     t = odo('systems_recently.csv', url, dshape=ds)
     print("Updating systems...")
-    DBSession.execute("INSERT INTO systems SELECT * FROM systems_tmp ON CONFLICT (id) DO UPDATE"
+    DBSession.execute("INSERT INTO systems SELECT * FROM systems_tmp ON CONFLICT (id) DO UPDATE "
                       "SET edsm_id = EXCLUDED.edsm_id, name = EXCLUDED.name, x = EXCLUDED.x, "
                       "y = EXCLUDED.y, z = EXCLUDED.z, population = EXCLUDED.population, "
                       "is_populated = EXCLUDED.population, government_id = EXCLUDED.government_id, "
