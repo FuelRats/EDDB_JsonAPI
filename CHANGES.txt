@@ -1,6 +1,6 @@
 0.0
 ---
 
--  Initial version. Basic JSONAPI functionality. This new branch is an extract from an internal project for
-   The Fuel Rats, and is due some significant testing before being considered release quality.
-
+-  Initial version. Basic JSONAPI functionality. This new branch is an extract from
+   an internal project for The Fuel Rats, and is due some significant testing before
+   being considered release quality.
