@@ -137,6 +137,7 @@ def main(argv=sys.argv):
                       "reserve_type_id = EXCLUDED.reserve_type_id, reserve_type = EXCLUDED.reserve_type")
     mark_changed(DBSession())
     transaction.commit()
+    print("Done!")
     #
     # TODO: Update stations
     #

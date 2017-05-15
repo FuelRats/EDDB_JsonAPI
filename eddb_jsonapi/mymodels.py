@@ -192,8 +192,8 @@ class PopulatedSystem(Base):
 
 class System(Base):
     __tablename__ = 'systems'
-    id = Column(Integer, primary_key=True)
-    edsm_id = Column(Integer)
+    id = Column(BigInteger, primary_key=True)
+    edsm_id = Column(BigInteger)
     name = Column(Text)
     x = Column(Float)
     y = Column(Float)
