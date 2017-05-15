@@ -114,7 +114,19 @@ def main(argv=sys.argv):
                 "controlling_minor_faction: ?string,  reserve_type_id: ?float64,  reserve_type: ?string  }")
     t = odo('systems_recently.csv', url, dshape=ds)
     print("Updating systems...")
-    DBSession.execute("INSERT INTO systems SELECT * FROM systems_tmp ON CONFLICT DO UPDATE")
+    DBSession.execute("INSERT INTO systems SELECT * FROM systems_tmp ON CONFLICT (id) DO UPDATE"
+                      "SET edsm_id = EXCLUDED.edsm_id, name = EXCLUDED.name, x = EXCLUDED.x, "
+                      "y = EXCLUDED.y, z = EXCLUDED.z, population = EXCLUDED.population, "
+                      "is_populated = EXCLUDED.population, government_id = EXCLUDED.government_id, "
+                      "government = EXCLUDED.government, allegiance_id = EXCLUDED.allegiance_id, "
+                      "allegiance = EXCLUDED.allegiance, state_id = EXCLUDED.state_id, "
+                      "state = EXCLUDED.state, security_id = EXCLUDED.security_id, security = EXCLUDED.security, "
+                      "primary_economy_id = EXCLUDED.primary_economy_id, primary_economy = EXCLUDED.primary_economy, "
+                      "power = EXCLUDED.power, power_state = EXCLUDED.power_state, power_state_id = "
+                      "EXCLUDED.power_state_id, needs_permit = EXCLUDED.needs_permit, updated_at = "
+                      "EXCLUDED.updated_at, simbad_ref = EXCLUDED.simbad_ref,"
+                      "controlling_minor_faction_id = EXCLUDED.controlling_minor_faction_id, "
+                      "reserve_type_id = EXCLUDED.reserve_type_id, reserve_type = EXCLUDED.reserve_type")
     mark_changed(DBSession())
     transaction.commit()
     #
