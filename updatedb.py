@@ -114,7 +114,15 @@ def main(argv=sys.argv):
                 "controlling_minor_faction: ?string,  reserve_type_id: ?float64,  reserve_type: ?string  }")
     t = odo('systems_recently.csv', url, dshape=ds)
     print("Updating systems...")
-    DBSession.execute("INSERT INTO systems SELECT * FROM systems_tmp ON CONFLICT (id) DO UPDATE "
+    DBSession.execute("INSERT INTO systems(id, edsm_id, name, x, y, z, population, is_populated, government_id, "
+                      "government, allegiance_id, allegiance, state_id, state, security_id, security, "
+                      "primary_economy_id, primary_economy, power, power_state, power_state_id, needs_permit, "
+                      "updated_at, simbad_ref, controlling_minor_faction_id, controlling_minor_faction, "
+                      "reserve_type_id, reserve_type) SELECT id, edsm_id, name, x, y, z, population, is_populated, "
+                      "government_id, government, allegiance_id, allegiance, state_id, state, security_id, security, "
+                      "primary_economy_id, primary_economy, power, power_state, power_state_id, needs_permit, "
+                      "updated_at, simbad_ref, controlling_minor_faction_id, controlling_minor_faction, "
+                      "reserve_type_id, reserve_type from systems_tmp ON CONFLICT DO UPDATE "
                       "SET edsm_id = EXCLUDED.edsm_id, name = EXCLUDED.name, x = EXCLUDED.x, "
                       "y = EXCLUDED.y, z = EXCLUDED.z, population = EXCLUDED.population, "
                       "is_populated = EXCLUDED.population, government_id = EXCLUDED.government_id, "
