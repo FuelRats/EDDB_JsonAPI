@@ -45,6 +45,27 @@ def main(argv=sys.argv):
     transaction.commit()
 
     #
+    # Factions
+    #
+    print("Updating factions...")
+    print("Downloading factions.jsonl from EDDB.io...")
+    r = requests.get("https://eddb.io/archive/v5/factions.jsonl", stream=True)
+    with open('factions.json', 'wb') as f:
+        for chunk in r.iter_content(chunk_size=4096):
+            if chunk:
+                f.write(chunk)
+    print("Saved factions.json. Dropping and updating.")
+    url = str(engine.url) + "::" + Faction.__tablename__
+    ds = dshape("var *{  id: ?int64,  name: ?string,  updated_at: ?int64,  government_id: ?int64,  "
+                "government: ?string,  allegiance_id: ?int64,  allegiance: ?string,  "
+                "state_id: ?int64,  state: ?string, home_system_id: ?int64,  "
+                "is_player_faction: ?bool }")
+    t = odo('jsonlines://factions.json', url, dshape=ds)
+    print("Done!")
+    mark_changed(DBSession())
+    transaction.commit()
+
+    #
     # Populated systems
     #
     print("Downloading systems_populated.jsonl from EDDB.io...")
@@ -66,27 +87,6 @@ def main(argv=sys.argv):
                 "minor_faction_presences: ?json }")
     t = odo('jsonlines://systems_populated.json', url, dshape=ds)
     print("Done!")
-
-    #
-    # Factions
-    #
-    print("Updating factions...")
-    print("Downloading factions.jsonl from EDDB.io...")
-    r = requests.get("https://eddb.io/archive/v5/factions.jsonl", stream=True)
-    with open('factions.json', 'wb') as f:
-        for chunk in r.iter_content(chunk_size=4096):
-            if chunk:
-                f.write(chunk)
-    print("Saved factions.json. Dropping and updating.")
-    url = str(engine.url) + "::" + Faction.__tablename__
-    ds = dshape("var *{  id: ?int64,  name: ?string,  updated_at: ?int64,  government_id: ?int64,  "
-                "government: ?string,  allegiance_id: ?int64,  allegiance: ?string,  "
-                "state_id: ?int64,  state: ?string, home_system_id: ?int64,  "
-                "is_player_faction: ?bool }")
-    t = odo('jsonlines://factions.json', url, dshape=ds)
-    print("Done!")
-    mark_changed(DBSession())
-    transaction.commit()
 
     #
     # TODO: Update bodies
