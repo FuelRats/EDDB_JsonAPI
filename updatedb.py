@@ -37,6 +37,12 @@ def main(argv=sys.argv):
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     print("Beginning update.")
+    DBSession.execute("DELETE FROM populated_systems")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("DELETE FROM factions")
+    mark_changed(DBSession())
+    transaction.commit()
 
     #
     # Populated systems
@@ -48,9 +54,6 @@ def main(argv=sys.argv):
             if chunk:
                 f.write(chunk)
     print("Saved systems_populated.json. Dropping and updating.")
-    DBSession.execute("DELETE FROM populated_systems")
-    mark_changed(DBSession())
-    transaction.commit()
     url = str(engine.url) + "::" + PopulatedSystem.__tablename__
     ds = dshape("var *{  id: ?int64,  edsm_id: ?int64,  name: ?string,  x: ?float64,  y: ?float64,  "
                 "z: ?float64,  population: ?int64,  is_populated: ?bool,  government_id: ?int64,  "
@@ -75,9 +78,6 @@ def main(argv=sys.argv):
             if chunk:
                 f.write(chunk)
     print("Saved factions.json. Dropping and updating.")
-    DBSession.execute("DELETE FROM factions")
-    mark_changed(DBSession())
-    transaction.commit()
     url = str(engine.url) + "::" + Faction.__tablename__
     ds = dshape("var *{  id: ?int64,  name: ?string,  updated_at: ?int64,  government_id: ?int64,  "
                 "government: ?string,  allegiance_id: ?int64,  allegiance: ?string,  "
