@@ -40,6 +40,9 @@ def main(argv=sys.argv):
     DBSession.execute("DELETE FROM populated_systems")
     mark_changed(DBSession())
     transaction.commit()
+    DBSession.execute("DELETE FROM stations")
+    mark_changed(DBSession())
+    transaction.commit()
     DBSession.execute("DELETE FROM factions")
     mark_changed(DBSession())
     transaction.commit()
@@ -91,6 +94,37 @@ def main(argv=sys.argv):
     #
     # TODO: Update bodies
     #
+
+    #
+    # Stations
+
+    #
+    # Stations
+    #
+
+    print("Downloading stations.jsonl from EDDB.io...")
+    r = requests.get("https://eddb.io/archive/v5/stations.jsonl", stream=True)
+    with open('stations.json', 'wb') as f:
+        for chunk in r.iter_content(chunk_size=4096):
+            if chunk:
+                f.write(chunk)
+    print("Saved stations.json. Converting JSONL to SQL.")
+
+    url = str(engine.url) + "::" + Station.__tablename__
+    ds = dshape("var *{  id: ?int64,  name: ?string,  system_id: ?int64,  updated_at: ?int64,  "
+                "max_landing_pad_size: ?string,  distance_to_star: ?int64,  government_id: ?int64,  "
+                "government: ?string,  allegiance_id: ?int64,  allegiance: ?string,  "
+                "state_id: ?int64,  state: ?string,  type_id: ?int64,  type: ?string,  "
+                "has_blackmarket: ?bool,  has_market: ?bool,  has_refuel: ?bool,  "
+                "has_repair: ?bool,  has_rearm: ?bool,  has_outfitting: ?bool,  "
+                "has_shipyard: ?bool,  has_docking: ?bool,  has_commodities: ?bool,  "
+                "import_commodities: ?json,  export_commodities: ?json,  prohibited_commodities: ?json, "
+                "economies: ?json, shipyard_updated_at: ?int64, outfitting_updated_at: ?int64, "
+                "market_updated_at: ?int64, is_planetary: ?bool, selling_ships: ?json, "
+                "selling_modules: ?json, settlement_size_id: ?string, settlement_size: ?int64, "
+                "settlement_security_id: ?int64, settlement_security: ?string, body_id: ?int64,"
+                "controlling_minor_faction_id: ?int64 }")
+    t = odo('jsonlines://stations.json', url, dshape=ds)
 
     #
     # Systems
