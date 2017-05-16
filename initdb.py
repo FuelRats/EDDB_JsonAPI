@@ -143,7 +143,7 @@ def main(argv=sys.argv):
                       "using gin(name gin_trgm_ops)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("CREATE index index_populated_system_names_btree on systems (name)")
+    DBSession.execute("CREATE index index_populated_system_names_btree on populated_systems (name)")
     mark_changed(DBSession())
     transaction.commit()
 

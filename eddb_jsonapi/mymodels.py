@@ -1,5 +1,3 @@
-from pyramid.security import Allow, Everyone
-
 from sqlalchemy import (
     Column,
     Integer,
@@ -9,7 +7,6 @@ from sqlalchemy import (
     Boolean,
     ForeignKey
 )
-
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import JSONB
@@ -180,7 +177,7 @@ class PopulatedSystem(Base):
     power_state = Column(Text)
     power_state_id = Column(Integer)
     needs_permit = Column(Boolean)
-    updated_at = Column(Integer)
+    updated_at = Column(BigInteger)
     simbad_ref = Column(Text)
     controlling_minor_faction_id = Column(Integer, ForeignKey('factions.id'))
     controlling_minor_faction = Column(Text)
