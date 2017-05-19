@@ -66,16 +66,12 @@ def main(argv=sys.argv):
     url = str(engine.url) + "::" + System.__tablename__
     t = odo('systems.csv', url, dshape=ds)
 
-    print("Uppercasing system names...")
-    DBSession.execute("UPDATE systems set name = UPPER(name)")
-    mark_changed(DBSession())
-    transaction.commit()
 
     print("Creating indexes...")
-    DBSession.execute("create index index_system_names_trigram on systems using gin(name gin_trgm_ops)")
+    DBSession.execute("create index index_system_names_trigram on systems using gin(upper(name) gin_trgm_ops)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("create index index_system_names_btree on systems (name)")
+    DBSession.execute("create index index_system_names_btree on systems (upper(name))")
     mark_changed(DBSession())
     transaction.commit()
     print("Done!")
