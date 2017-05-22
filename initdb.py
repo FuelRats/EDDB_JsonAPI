@@ -44,7 +44,7 @@ def main(argv=sys.argv):
     # Systems
     #
     if os.path.isfile('systems.csv'):
-        if datetime.fromtimestamp(os.path.getmtime('systems.csv')) > datetime.today()-timedelta(days=7):
+        if datetime.fromtimestamp(os.path.getmtime('systems.csv')) > datetime.today() - timedelta(days=7):
             print("Using cached systems.csv")
     else:
         print("Downloading systems.csv from EDDB.io...")
@@ -65,23 +65,25 @@ def main(argv=sys.argv):
                 "controlling_minor_faction: ?string,  reserve_type_id: ?float64,  reserve_type: ?string  }")
     url = str(engine.url) + "::" + System.__tablename__
     t = odo('systems.csv', url, dshape=ds)
-
-
-    print("Creating indexes...")
-    DBSession.execute("create index index_system_names_trigram on systems using gin(upper(name) gin_trgm_ops)")
+    # Reapplying uppercase to systems, as the index being uppercased slows down searches again.
+    print("Uppercasing system names...")
+    DBSession.execute("UPDATE systems SET name = UPPER(name)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("create index index_system_names_btree on systems (upper(name))")
+    print("Creating indexes...")
+    DBSession.execute("CREATE INDEX index_system_names_trigram ON systems USING GIN(name gin_trgm_ops)")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX index_system_names_btree ON systems (name)")
     mark_changed(DBSession())
     transaction.commit()
     print("Done!")
-
 
     #
     # Factions
     #
     if os.path.isfile('factions.json'):
-        if datetime.fromtimestamp(os.path.getmtime('factions.json')) > datetime.today()-timedelta(days=7):
+        if datetime.fromtimestamp(os.path.getmtime('factions.json')) > datetime.today() - timedelta(days=7):
             print("Using cached factions.json")
     else:
         print("Downloading factions.jsonl from EDDB.io...")
@@ -99,7 +101,7 @@ def main(argv=sys.argv):
                 "is_player_faction: ?bool }")
     t = odo('jsonlines://factions.json', url, dshape=ds)
     print("Done!")
-    DBSession.execute("create index factions_idx on factions(id)")
+    DBSession.execute("CREATE INDEX factions_idx ON factions(id)")
     mark_changed(DBSession())
     transaction.commit()
 
@@ -107,7 +109,7 @@ def main(argv=sys.argv):
     # Populated Systems
     #
     if os.path.isfile('systems_populated.json'):
-        if datetime.fromtimestamp(os.path.getmtime('systems_populated.json')) > datetime.today()-timedelta(days=7):
+        if datetime.fromtimestamp(os.path.getmtime('systems_populated.json')) > datetime.today() - timedelta(days=7):
             print("Using cached systems.csv")
     else:
         print("Downloading systems_populated.jsonl from EDDB.io...")
@@ -131,15 +133,15 @@ def main(argv=sys.argv):
     t = odo('jsonlines://systems_populated.json', url, dshape=ds)
 
     print("Uppercasing system names...")
-    DBSession.execute("UPDATE populated_systems set name = UPPER(name)")
+    DBSession.execute("UPDATE populated_systems SET name = UPPER(name)")
     mark_changed(DBSession())
     transaction.commit()
     print("Creating indexes...")
-    DBSession.execute("CREATE index index_populated_system_names_trigram on populated_systems "
-                      "using gin(name gin_trgm_ops)")
+    DBSession.execute("CREATE INDEX index_populated_system_names_trigram ON populated_systems "
+                      "USING GIN(name gin_trgm_ops)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("CREATE index index_populated_system_names_btree on populated_systems (name)")
+    DBSession.execute("CREATE INDEX index_populated_system_names_btree ON populated_systems (name)")
     mark_changed(DBSession())
     transaction.commit()
 
@@ -149,7 +151,7 @@ def main(argv=sys.argv):
     # Bodies
     #
     if os.path.isfile('bodies.json'):
-        if datetime.fromtimestamp(os.path.getmtime('bodies.json')) > datetime.today()-timedelta(days=7):
+        if datetime.fromtimestamp(os.path.getmtime('bodies.json')) > datetime.today() - timedelta(days=7):
             print("Using cached bodies.json")
     else:
         print("Downloading bodies.jsonl from EDDB.io...")
@@ -179,10 +181,10 @@ def main(argv=sys.argv):
     url = str(engine.url) + "::" + Body.__tablename__
     t = odo('jsonlines://bodies.json', url, dshape=ds)
     print("Creating indexes...")
-    DBSession.execute("CREATE INDEX bodies_idx on bodies(name text_pattern_ops)")
+    DBSession.execute("CREATE INDEX bodies_idx ON bodies(name text_pattern_ops)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("CREATE INDEX systemid_idx on bodies(system_id)")
+    DBSession.execute("CREATE INDEX systemid_idx ON bodies(system_id)")
     mark_changed(DBSession())
     transaction.commit()
     print("Done!")
@@ -192,7 +194,7 @@ def main(argv=sys.argv):
     #
 
     if os.path.isfile('stations.json'):
-        if datetime.fromtimestamp(os.path.getmtime('stations.json')) > datetime.today()-timedelta(days=7):
+        if datetime.fromtimestamp(os.path.getmtime('stations.json')) > datetime.today() - timedelta(days=7):
             print("Using cached stations.json")
     else:
         print("Downloading stations.jsonl from EDDB.io...")
@@ -220,10 +222,10 @@ def main(argv=sys.argv):
     t = odo('jsonlines://stations.json', url, dshape=ds)
 
     print("Creating indexes...")
-    DBSession.execute("CREATE index index_stations_systemid_btree on stations(system_id)")
+    DBSession.execute("CREATE INDEX index_stations_systemid_btree ON stations(system_id)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("CREATE index index_stations_btree on stations(id)")
+    DBSession.execute("CREATE INDEX index_stations_btree ON stations(id)")
     mark_changed(DBSession())
     transaction.commit()
     print("Done!")
@@ -233,7 +235,7 @@ def main(argv=sys.argv):
     #
     # TODO: Finish adding Listings
     if os.path.isfile('listings.csv'):
-        if datetime.fromtimestamp(os.path.getmtime('listings.csv')) > datetime.today()-timedelta(days=7):
+        if datetime.fromtimestamp(os.path.getmtime('listings.csv')) > datetime.today() - timedelta(days=7):
             print("Using cached listings.csv")
     else:
         print("Downloading listings.csv from EDDB.io...")
@@ -249,7 +251,9 @@ def main(argv=sys.argv):
     t = odo('listings.csv', url, dshape=ds)
 
     print("Creating indexes...")
-    DBSession.execute("CREATE INDEX index_listings_stationid_btree on listings(station_id)")
+    DBSession.execute("CREATE INDEX index_listings_stationid_btree ON listings(station_id)")
     mark_changed(DBSession())
     transaction.commit()
+
+
 main()
