@@ -37,9 +37,14 @@ def main(argv=sys.argv):
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     print("Beginning update.")
-    DBSession.execute("DELETE FROM populated_systems")
-    DBSession.execute("DELETE FROM stations")
-    DBSession.execute("DELETE FROM factions")
+    PopulatedSystem.__table__.drop(engine)
+    Station.__table__.drop(engine)
+    Faction.__table__.drop(engine)
+    Listing.__table__.drop(engine)
+    PopulatedSystem.__table__.create(engine)
+    Station.__table__.create(engine)
+    Faction.__table__.create(engine)
+    Listing.__table__.create(engine)
     mark_changed(DBSession())
     transaction.commit()
 
@@ -88,16 +93,8 @@ def main(argv=sys.argv):
     print("Done!")
 
     #
-    # TODO: Update bodies
-    #
-
-    #
-    # Stations
-
-    #
     # Stations
     #
-
     print("Downloading stations.jsonl from EDDB.io...")
     r = requests.get("https://eddb.io/archive/v5/stations.jsonl", stream=True)
     with open('stations.json', 'wb') as f:
@@ -168,12 +165,26 @@ def main(argv=sys.argv):
     mark_changed(DBSession())
     transaction.commit()
     print("Done!")
-    #
-    # TODO: Update stations
-    #
 
     #
     # TODO: Update listings
     #
+    print("Downloading listings.csv from EDDB.io...")
+    r = requests.get("https://eddb.io/archive/v5/listings.csv", stream=True)
+    with open('listings.csv', 'wb') as f:
+        for chunk in r.iter_content(chunk_size=4096):
+            if chunk:
+                f.write(chunk)
+    print("Saved listings.csv. Converting CSV to SQL.")
+    url = str(engine.url) + "::" + Listing.__tablename__
+    ds = dshape("var *{  id: ?int64, station_id: ?int64, commodity: ?int64, supply: ?int64, "
+                "buy_price: ?int64, sell_price: ?int64, demand: ?int64, collected_at: ?int64 }")
+    t = odo('listings.csv', url, dshape=ds)
+
+    print("Creating indexes...")
+    DBSession.execute("CREATE INDEX index_listings_stationid_btree ON listings(station_id)")
+    mark_changed(DBSession())
+    transaction.commit()
+
 
 main()
