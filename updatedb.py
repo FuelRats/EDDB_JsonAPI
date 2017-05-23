@@ -58,16 +58,18 @@ def main(argv=sys.argv):
         for chunk in r.iter_content(chunk_size=4096):
             if chunk:
                 f.write(chunk)
-    print("Saved factions.json. Dropping and updating.")
+    print("Saved factions.json. Updating...")
     url = str(engine.url) + "::" + Faction.__tablename__
     ds = dshape("var *{  id: ?int64,  name: ?string,  updated_at: ?int64,  government_id: ?int64,  "
                 "government: ?string,  allegiance_id: ?int64,  allegiance: ?string,  "
                 "state_id: ?int64,  state: ?string, home_system_id: ?int64,  "
                 "is_player_faction: ?bool }")
     t = odo('jsonlines://factions.json', url, dshape=ds)
-    print("Done!")
+    print("Done! Creating index...")
+    DBSession.execute("CREATE INDEX factions_idx ON factions(id)")
     mark_changed(DBSession())
     transaction.commit()
+    print("Completed processing factions.")
 
     #
     # Populated systems
@@ -78,7 +80,7 @@ def main(argv=sys.argv):
         for chunk in r.iter_content(chunk_size=4096):
             if chunk:
                 f.write(chunk)
-    print("Saved systems_populated.json. Dropping and updating.")
+    print("Saved systems_populated.json. Updating...")
     url = str(engine.url) + "::" + PopulatedSystem.__tablename__
     ds = dshape("var *{  id: ?int64,  edsm_id: ?int64,  name: ?string,  x: ?float64,  y: ?float64,  "
                 "z: ?float64,  population: ?int64,  is_populated: ?bool,  government_id: ?int64,  "
@@ -90,7 +92,19 @@ def main(argv=sys.argv):
                 "controlling_minor_faction: ?string,  reserve_type_id: ?float64,  reserve_type: ?string,"
                 "minor_faction_presences: ?json }")
     t = odo('jsonlines://systems_populated.json', url, dshape=ds)
-    print("Done!")
+    print("Done! Uppercasing system names...")
+    DBSession.execute("UPDATE populated_systems SET name = UPPER(name)")
+    mark_changed(DBSession())
+    transaction.commit()
+    print("Creating indexes...")
+    DBSession.execute("CREATE INDEX index_populated_system_names_trigram ON populated_systems "
+                      "USING GIN(name gin_trgm_ops)")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX index_populated_system_names_btree ON populated_systems (name)")
+    mark_changed(DBSession())
+    transaction.commit()
+    print("Completed processing populated systems.")
 
     #
     # Stations
@@ -101,7 +115,7 @@ def main(argv=sys.argv):
         for chunk in r.iter_content(chunk_size=4096):
             if chunk:
                 f.write(chunk)
-    print("Saved stations.json. Converting JSONL to SQL.")
+    print("Saved stations.json. Updating...")
 
     url = str(engine.url) + "::" + Station.__tablename__
     ds = dshape("var *{  id: ?int64,  name: ?string,  system_id: ?int64,  updated_at: ?int64,  "
@@ -118,6 +132,14 @@ def main(argv=sys.argv):
                 "settlement_security_id: ?int64, settlement_security: ?string, body_id: ?int64,"
                 "controlling_minor_faction_id: ?int64 }")
     t = odo('jsonlines://stations.json', url, dshape=ds)
+    print("Done! Creating indexes...")
+    DBSession.execute("CREATE INDEX index_stations_systemid_btree ON stations(system_id)")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX index_stations_btree ON stations(id)")
+    mark_changed(DBSession())
+    transaction.commit()
+    print("Completed processing stations.")
 
     #
     # Systems
@@ -128,7 +150,7 @@ def main(argv=sys.argv):
         for chunk in r.iter_content(chunk_size=4096):
             if chunk:
                 f.write(chunk)
-    print("Saved systems_recently.csv. Creating temporary table and importing.")
+    print("Saved systems_recently.csv. Creating temporary table and importing...")
     DBSession.execute("CREATE TEMP TABLE systems_tmp (LIKE systems)")
     url = str(engine.url) + "::systems_tmp"
     ds = dshape("var *{  id: ?int64,  edsm_id: ?int64,  name: ?string,  x: ?float64,  y: ?float64,  "
@@ -167,7 +189,7 @@ def main(argv=sys.argv):
     print("Done!")
 
     #
-    # TODO: Update listings
+    # Listings
     #
     print("Downloading listings.csv from EDDB.io...")
     r = requests.get("https://eddb.io/archive/v5/listings.csv", stream=True)
@@ -175,7 +197,7 @@ def main(argv=sys.argv):
         for chunk in r.iter_content(chunk_size=4096):
             if chunk:
                 f.write(chunk)
-    print("Saved listings.csv. Converting CSV to SQL.")
+    print("Saved listings.csv. Updating...")
     url = str(engine.url) + "::" + Listing.__tablename__
     ds = dshape("var *{  id: ?int64, station_id: ?int64, commodity: ?int64, supply: ?int64, "
                 "buy_price: ?int64, sell_price: ?int64, demand: ?int64, collected_at: ?int64 }")
@@ -185,6 +207,6 @@ def main(argv=sys.argv):
     DBSession.execute("CREATE INDEX index_listings_stationid_btree ON listings(station_id)")
     mark_changed(DBSession())
     transaction.commit()
-
+    print("Updates complete.")
 
 main()

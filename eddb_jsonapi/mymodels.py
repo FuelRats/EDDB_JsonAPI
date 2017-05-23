@@ -219,6 +219,5 @@ class System(Base):
     reserve_type = Column(Text)
     bodies = relationship("Body")
 
-
     def __init__(self, request):
         pass
