@@ -41,10 +41,11 @@ def main(argv=sys.argv):
     Listing.__table__.drop(engine)
     Station.__table__.drop(engine)
     Faction.__table__.drop(engine)
-    PopulatedSystem.__table__.create(engine)
-    Listing.__table__.create(engine)
-    Station.__table__.create(engine)
+
     Faction.__table__.create(engine)
+    PopulatedSystem.__table__.create(engine)
+    Station.__table__.create(engine)
+    Listing.__table__.create(engine)
     mark_changed(DBSession())
     transaction.commit()
 
