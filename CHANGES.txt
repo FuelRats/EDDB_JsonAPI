@@ -1,6 +1,14 @@
+0.1
+---
+
+-  Introduce updatedb.py to do updates from systems_recently, and full updates from
+   newly downloaded EDDB dumps. This process can no longer be done while the API is
+   live, due to having to drop the Bodies data to update presently.
+
 0.0
 ---
 
 -  Initial version. Basic JSONAPI functionality. This new branch is an extract from
    an internal project for The Fuel Rats, and is due some significant testing before
    being considered release quality.
+

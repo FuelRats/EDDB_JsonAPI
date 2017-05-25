@@ -233,7 +233,7 @@ def main(argv=sys.argv):
     #
     # Listings
     #
-    # TODO: Finish adding Listings
+
     if os.path.isfile('listings.csv'):
         if datetime.fromtimestamp(os.path.getmtime('listings.csv')) > datetime.today() - timedelta(days=7):
             print("Using cached listings.csv")

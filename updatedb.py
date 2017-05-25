@@ -41,9 +41,10 @@ def main(argv=sys.argv):
     Listing.__table__.drop(engine)
     Station.__table__.drop(engine)
     Faction.__table__.drop(engine)
-
+    Body.__table__.drop(engine)
     Faction.__table__.create(engine)
     PopulatedSystem.__table__.create(engine)
+    Body.__table__.create(engine)
     Station.__table__.create(engine)
     Listing.__table__.create(engine)
     mark_changed(DBSession())
@@ -71,6 +72,44 @@ def main(argv=sys.argv):
     mark_changed(DBSession())
     transaction.commit()
     print("Completed processing factions.")
+
+    #
+    # Bodies
+    #
+    print("Downloading bodies.jsonl from EDDB.io...")
+    r = requests.get("https://eddb.io/archive/v5/bodies.jsonl", stream=True)
+    with open('bodies.json', 'wb') as f:
+        for chunk in r.iter_content(chunk_size=4096):
+            if chunk:
+                f.write(chunk)
+    print("Saved bodies.jsonl. Converting JSONL to SQL.")
+    ds = dshape("var *{ id: ?int64, created_at: ?int64, updated_at: ?int64, name: ?string, "
+                "system_id: ?int64, group_id: ?int64, group_name: ?string, type_id: ?int64, "
+                "type_name: ?string, distance_to_arrival: ?int64, full_spectral_class: ?string, "
+                "spectral_class: ?string, spectral_sub_class: ?string, luminosity_class: ?string, "
+                "luminosity_sub_class: ?string, surface_temperature: ?int64, is_main_star: ?bool, "
+                "age: ?int64, solar_masses: ?float64, solar_radius: ?float64, catalogue_gliese_id : ?string, "
+                "catalogue_hipp_id: ?string, catalogue_hd_id: ?string, volcanism_type_id: ?int64, "
+                "volcanism_type_name: ?string, atmosphere_type_id: ?int64, atmosphere_type_name: ?string, "
+                "terraforming_state_id: ?int64, terraforming_state_name: ?string, earth_masses: ?float64, "
+                "radius: ?int64, gravity: ?float64, surface_pressure: ?int64, orbital_period: ?float64, "
+                "semi_major_axis: ?float64, orbital_eccentricity: ?float64, orbital_inclination: ?float64, "
+                "arg_of_periapsis: ?float64, rotational_period: ?float64, "
+                "is_rotational_period_tidally_locked: ?bool, axis_tilt: ?float64, eg_id: ?int64, "
+                "belt_moon_masses: ?float64, ring_type_id: ?int64, ring_type_name: ?string, "
+                "ring_mass: ?int64, ring_inner_radius: ?float64, ring_outer_radius: ?float64, "
+                "rings: ?json, atmosphere_composition: ?json, solid_composition: ?json, "
+                "materials: ?json, is_landable: ?bool}")
+    url = str(engine.url) + "::" + Body.__tablename__
+    t = odo('jsonlines://bodies.json', url, dshape=ds)
+    print("Creating indexes...")
+    DBSession.execute("CREATE INDEX bodies_idx ON bodies(name text_pattern_ops)")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX systemid_idx ON bodies(system_id)")
+    mark_changed(DBSession())
+    transaction.commit()
+    print("Done!")
 
     #
     # Populated systems
