@@ -50,6 +50,10 @@ def main(argv=sys.argv):
     transaction.commit()
 
     #
+    # TODO: Bodies
+    #
+
+    #
     # Factions
     #
     print("Updating factions...")
