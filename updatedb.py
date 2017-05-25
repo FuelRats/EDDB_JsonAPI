@@ -74,6 +74,54 @@ def main(argv=sys.argv):
     print("Completed processing factions.")
 
     #
+    # Systems
+    #
+    print("Downloading systems_recently.csv from EDDB.io...")
+    r = requests.get("https://eddb.io/archive/v5/systems_recently.csv", stream=True)
+    with open('systems_recently.csv', 'wb') as f:
+        for chunk in r.iter_content(chunk_size=4096):
+            if chunk:
+                f.write(chunk)
+    print("Saved systems_recently.csv. Creating temporary table and importing...")
+    DBSession.execute("CREATE TEMP TABLE systems_tmp (LIKE systems)")
+    url = str(engine.url) + "::systems_tmp"
+    ds = dshape("var *{  id: ?int64,  edsm_id: ?int64,  name: ?string,  x: ?float64,  y: ?float64,  "
+                "z: ?float64,  population: ?int64,  is_populated: ?bool,  government_id: ?int64,  "
+                "government: ?string,  allegiance_id: ?int64,  allegiance: ?string,  "
+                "state_id: ?int64,  state: ?string,  security_id: ?float64,  security: ?string,  "
+                "primary_economy_id: ?float64,  primary_economy: ?string,  power: ?string,  "
+                "power_state: ?string,  power_state_id: ?string,  needs_permit: ?bool,  "
+                "updated_at: ?int64,  simbad_ref: ?string,  controlling_minor_faction_id: ?string,  "
+                "controlling_minor_faction: ?string,  reserve_type_id: ?float64,  reserve_type: ?string  }")
+    t = odo('systems_recently.csv', url, dshape=ds)
+    print("Updating systems...")
+    DBSession.execute("INSERT INTO systems(id, edsm_id, name, x, y, z, population, is_populated, government_id, "
+                      "government, allegiance_id, allegiance, state_id, state, security_id, security, "
+                      "primary_economy_id, primary_economy, power, power_state, power_state_id, needs_permit, "
+                      "updated_at, simbad_ref, controlling_minor_faction_id, controlling_minor_faction, "
+                      "reserve_type_id, reserve_type) SELECT id, edsm_id, name, x, y, z, population, is_populated, "
+                      "government_id, government, allegiance_id, allegiance, state_id, state, security_id, security, "
+                      "primary_economy_id, primary_economy, power, power_state, power_state_id, needs_permit, "
+                      "updated_at, simbad_ref, controlling_minor_faction_id, controlling_minor_faction, "
+                      "reserve_type_id, reserve_type from systems_tmp ON CONFLICT DO UPDATE "
+                      "SET edsm_id = EXCLUDED.edsm_id, name = EXCLUDED.name, x = EXCLUDED.x, "
+                      "y = EXCLUDED.y, z = EXCLUDED.z, population = EXCLUDED.population, "
+                      "is_populated = EXCLUDED.population, government_id = EXCLUDED.government_id, "
+                      "government = EXCLUDED.government, allegiance_id = EXCLUDED.allegiance_id, "
+                      "allegiance = EXCLUDED.allegiance, state_id = EXCLUDED.state_id, "
+                      "state = EXCLUDED.state, security_id = EXCLUDED.security_id, security = EXCLUDED.security, "
+                      "primary_economy_id = EXCLUDED.primary_economy_id, primary_economy = EXCLUDED.primary_economy, "
+                      "power = EXCLUDED.power, power_state = EXCLUDED.power_state, power_state_id = "
+                      "EXCLUDED.power_state_id, needs_permit = EXCLUDED.needs_permit, updated_at = "
+                      "EXCLUDED.updated_at, simbad_ref = EXCLUDED.simbad_ref,"
+                      "controlling_minor_faction_id = EXCLUDED.controlling_minor_faction_id, "
+                      "reserve_type_id = EXCLUDED.reserve_type_id, reserve_type = EXCLUDED.reserve_type")
+    mark_changed(DBSession())
+    transaction.commit()
+    print("Done!")
+
+
+    #
     # Bodies
     #
     print("Downloading bodies.jsonl from EDDB.io...")
@@ -180,53 +228,6 @@ def main(argv=sys.argv):
     mark_changed(DBSession())
     transaction.commit()
     print("Completed processing stations.")
-
-    #
-    # Systems
-    #
-    print("Downloading systems_recently.csv from EDDB.io...")
-    r = requests.get("https://eddb.io/archive/v5/systems_recently.csv", stream=True)
-    with open('systems_recently.csv', 'wb') as f:
-        for chunk in r.iter_content(chunk_size=4096):
-            if chunk:
-                f.write(chunk)
-    print("Saved systems_recently.csv. Creating temporary table and importing...")
-    DBSession.execute("CREATE TEMP TABLE systems_tmp (LIKE systems)")
-    url = str(engine.url) + "::systems_tmp"
-    ds = dshape("var *{  id: ?int64,  edsm_id: ?int64,  name: ?string,  x: ?float64,  y: ?float64,  "
-                "z: ?float64,  population: ?int64,  is_populated: ?bool,  government_id: ?int64,  "
-                "government: ?string,  allegiance_id: ?int64,  allegiance: ?string,  "
-                "state_id: ?int64,  state: ?string,  security_id: ?float64,  security: ?string,  "
-                "primary_economy_id: ?float64,  primary_economy: ?string,  power: ?string,  "
-                "power_state: ?string,  power_state_id: ?string,  needs_permit: ?bool,  "
-                "updated_at: ?int64,  simbad_ref: ?string,  controlling_minor_faction_id: ?string,  "
-                "controlling_minor_faction: ?string,  reserve_type_id: ?float64,  reserve_type: ?string  }")
-    t = odo('systems_recently.csv', url, dshape=ds)
-    print("Updating systems...")
-    DBSession.execute("INSERT INTO systems(id, edsm_id, name, x, y, z, population, is_populated, government_id, "
-                      "government, allegiance_id, allegiance, state_id, state, security_id, security, "
-                      "primary_economy_id, primary_economy, power, power_state, power_state_id, needs_permit, "
-                      "updated_at, simbad_ref, controlling_minor_faction_id, controlling_minor_faction, "
-                      "reserve_type_id, reserve_type) SELECT id, edsm_id, name, x, y, z, population, is_populated, "
-                      "government_id, government, allegiance_id, allegiance, state_id, state, security_id, security, "
-                      "primary_economy_id, primary_economy, power, power_state, power_state_id, needs_permit, "
-                      "updated_at, simbad_ref, controlling_minor_faction_id, controlling_minor_faction, "
-                      "reserve_type_id, reserve_type from systems_tmp ON CONFLICT DO UPDATE "
-                      "SET edsm_id = EXCLUDED.edsm_id, name = EXCLUDED.name, x = EXCLUDED.x, "
-                      "y = EXCLUDED.y, z = EXCLUDED.z, population = EXCLUDED.population, "
-                      "is_populated = EXCLUDED.population, government_id = EXCLUDED.government_id, "
-                      "government = EXCLUDED.government, allegiance_id = EXCLUDED.allegiance_id, "
-                      "allegiance = EXCLUDED.allegiance, state_id = EXCLUDED.state_id, "
-                      "state = EXCLUDED.state, security_id = EXCLUDED.security_id, security = EXCLUDED.security, "
-                      "primary_economy_id = EXCLUDED.primary_economy_id, primary_economy = EXCLUDED.primary_economy, "
-                      "power = EXCLUDED.power, power_state = EXCLUDED.power_state, power_state_id = "
-                      "EXCLUDED.power_state_id, needs_permit = EXCLUDED.needs_permit, updated_at = "
-                      "EXCLUDED.updated_at, simbad_ref = EXCLUDED.simbad_ref,"
-                      "controlling_minor_faction_id = EXCLUDED.controlling_minor_faction_id, "
-                      "reserve_type_id = EXCLUDED.reserve_type_id, reserve_type = EXCLUDED.reserve_type")
-    mark_changed(DBSession())
-    transaction.commit()
-    print("Done!")
 
     #
     # Listings
