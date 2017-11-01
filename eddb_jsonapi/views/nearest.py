@@ -43,11 +43,23 @@ def nearest(request):
             include = True
         else:
             include = False
-        sql = text('SELECT *,(sqrt((populated_systems.X - ' + x + ')^2 + (populated_systems.Y - ' +
-                   y + ')^2 + (populated_systems.Z - ' + z + '0)^2)) as DISTANCE from '
-                                                             'populated_systems ORDER BY (sqrt((populated_systems.X - ' + x + ')^2 + ' +
-                   '(populated_systems.Y - ' + y + ')^2 + (populated_systems.Z - ' + z + ')^2)) '
-                                                                                         ' LIMIT ' + str(limit) + ';')
+        if 'cubesize' in request.params:
+            cubesize = request.params['cubesize']
+        else:
+            cubesize = 200
+        if 'aggressive' in request.params:
+            sql = text('SELECT *,(sqrt((systems.X - ' + x + ')^2 + (systems.Y - ' +
+                        y + ')^2 + (systems.Z - ' + z + '0)^2)) as DISTANCE from '
+                        'systems WHERE x BETWEEN ' + str(float(x)-cubesize) + ' AND '+ str(float(x)+cubesize) + ' AND '
+                        'y BETWEEN ' + str(float(y)-cubesize) + ' AND ' + str(float(y)+cubesize) +' AND z BETWEEN ' +
+                        str(float(z)-cubesize) + ' AND '+ str(float(z)+cubesize) +' ORDER BY (sqrt((systems.X - ' + x + ')^2 + ' +
+                        '(systems.Y - ' + y + ')^2 + (systems.Z - ' + z + ')^2)) LIMIT ' + str(limit) + ';')
+        else:
+            sql = text('SELECT *,(sqrt((populated_systems.X - ' + x + ')^2 + (populated_systems.Y - ' +
+                        y + ')^2 + (populated_systems.Z - ' + z + '0)^2)) as DISTANCE from '
+                        'populated_systems ORDER BY (sqrt((populated_systems.X - ' + x + ')^2 + ' +
+                        '(populated_systems.Y - ' + y + ')^2 + (populated_systems.Z - ' + z + ')^2)) '
+                        ' LIMIT ' + str(limit) + ';')
         result = DBSession.execute(sql)
         candidates = []
         ids = []
