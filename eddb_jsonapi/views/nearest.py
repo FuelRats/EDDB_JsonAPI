@@ -81,7 +81,7 @@ def nearest(request):
                                  row.max_landing_pad_size, 'is_planetary': row.is_planetary})
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
-    if results:
+    if bodies:
         return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit},
                 'candidates': candidates, 'included': { 'bodies': bodies, 'stations': stations}}
     else:
