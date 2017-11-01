@@ -40,7 +40,7 @@ def nearest(request):
                    y + ')^2 + (populated_systems.Z - ' + z + '0)^2)) as DISTANCE from '
                    'populated_systems ORDER BY (sqrt((populated_systems.X - ' + x + ')^2 + ' +
                    '(populated_systems.Y - ' + y + ')^2 + (populated_systems.Z - ' + z + ')^2)) '
-                   ' LIMIT ' + limit + ';')
+                   ' LIMIT ' + str(limit) + ';')
         result = DBSession.execute(sql)
         candidates = []
         for row in result:
