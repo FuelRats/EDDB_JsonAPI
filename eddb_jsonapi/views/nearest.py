@@ -1,12 +1,15 @@
 from pyramid.view import (
     view_config,
     view_defaults
-    )
+)
 from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import text
 
 from ..mymodels import DBSession
+from ..mymodels import Body
+from ..mymodels import Station
+import json
 
 db_err_msg = """\
 Pyramid is having a problem using your SQL database.  The problem
@@ -36,16 +39,39 @@ def nearest(request):
             limit = request.params['limit']
         else:
             limit = 10
+        if 'include' in request.params:
+            include = True
+        else:
+            include = False
         sql = text('SELECT *,(sqrt((populated_systems.X - ' + x + ')^2 + (populated_systems.Y - ' +
                    y + ')^2 + (populated_systems.Z - ' + z + '0)^2)) as DISTANCE from '
-                   'populated_systems ORDER BY (sqrt((populated_systems.X - ' + x + ')^2 + ' +
+                                                             'populated_systems ORDER BY (sqrt((populated_systems.X - ' + x + ')^2 + ' +
                    '(populated_systems.Y - ' + y + ')^2 + (populated_systems.Z - ' + z + ')^2)) '
-                   ' LIMIT ' + str(limit) + ';')
+                                                                                         ' LIMIT ' + str(limit) + ';')
         result = DBSession.execute(sql)
         candidates = []
+        ids = []
         for row in result:
             candidates.append({'name': row['name'], 'distance': row['distance'], 'id': row['id']})
+            ids.append(row['id'])
+        if include:
+            query = DBSession.query(Body).filter(Body.system_id.in_(tuple(ids)))
+            results = query.all()
+            bodies = []
+            for row in results:
+                bodies.append({'id': row.id, 'system_id': row.system_id, 'spectral_class':
+                    row.spectral_class})
+            query = DBSession.query(Station).filter(Station.system_id.in_(tuple(ids)))
+            results = query.all()
+            stations = []
+            for row in results:
+                stations.append({'id': row.id, 'system_id': row.system_id, 'max_landing_pad_size':
+                                 row.max_landing_pad_size, 'is_planetary': row.is_planetary})
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
-    return {'meta': {'query_x' : x, 'query_y' : y, 'query_z' : z, 'limit': limit},
-            'candidates': candidates}
+    if results:
+        return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit},
+                'candidates': candidates, 'included': { 'bodies': bodies, 'stations': stations}}
+    else:
+        return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit},
+                'candidates': candidates}
