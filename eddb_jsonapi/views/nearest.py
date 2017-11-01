@@ -32,15 +32,20 @@ def nearest(request):
         x = request.params['x']
         y = request.params['y']
         z = request.params['z']
-
+        if request.params['limit']:
+            limit = request.params['limit']
+        else:
+            limit = 10
         sql = text('SELECT *,(sqrt((populated_systems.X - ' + x + ')^2 + (populated_systems.Y - ' +
                    y + ')^2 + (populated_systems.Z - ' + z + '0)^2)) as DISTANCE from '
                    'populated_systems ORDER BY (sqrt((populated_systems.X - ' + x + ')^2 + ' +
-                   '(populated_systems.Y - ' + y + ')^2 + (populated_systems.Z - ' + z + ')^2)) LIMIT 10;')
+                   '(populated_systems.Y - ' + y + ')^2 + (populated_systems.Z - ' + z + ')^2)) '
+                   ' LIMIT ' + limit + ';')
         result = DBSession.execute(sql)
         candidates = []
         for row in result:
-            candidates.append({row['name'] : row['distance']})
+            candidates.append({'name': row['name'], 'distance': row['distance'], 'id': row['id']})
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
-    return {'query_x' : x, 'query_y' : y, 'query_z' : z, 'candidates' : candidates}
+    return {'meta': {'query_x' : x, 'query_y' : y, 'query_z' : z, 'limit': limit},
+            'candidates': candidates}
