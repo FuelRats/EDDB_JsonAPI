@@ -10,6 +10,14 @@ from ..mymodels import DBSession
 from ..mymodels import Body
 from ..mymodels import Station
 import json
+from sqlalchemy.ext.declarative import DeclarativeMeta
+
+from sqlalchemy import inspect
+
+
+def object_as_dict(obj):
+    return {c.key: getattr(obj, c.key)
+            for c in inspect(obj).mapper.column_attrs}
 
 db_err_msg = """\
 Pyramid is having a problem using your SQL database.  The problem
@@ -63,22 +71,21 @@ def nearest(request):
         result = DBSession.execute(sql)
         candidates = []
         ids = []
+        bodies = []
+        stations = []
         for row in result:
             candidates.append({'name': row['name'], 'distance': row['distance'], 'id': row['id']})
             ids.append(row['id'])
         if include:
             query = DBSession.query(Body).filter(Body.system_id.in_(tuple(ids)))
             results = query.all()
-            bodies = []
             for row in results:
-                bodies.append({'id': row.id, 'system_id': row.system_id, 'spectral_class':
-                    row.spectral_class})
+                bodies.append(object_as_dict(row))
             query = DBSession.query(Station).filter(Station.system_id.in_(tuple(ids)))
             results = query.all()
-            stations = []
+
             for row in results:
-                stations.append({'id': row.id, 'system_id': row.system_id, 'max_landing_pad_size':
-                                 row.max_landing_pad_size, 'is_planetary': row.is_planetary})
+                stations.append(object_as_dict(row))
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
     if bodies:
