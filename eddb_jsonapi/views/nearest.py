@@ -32,7 +32,7 @@ def nearest(request):
         x = request.params['x']
         y = request.params['y']
         z = request.params['z']
-        if request.params['limit']:
+        if 'limit' in request.params:
             limit = request.params['limit']
         else:
             limit = 10
