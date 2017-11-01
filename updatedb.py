@@ -120,7 +120,6 @@ def main(argv=sys.argv):
     transaction.commit()
     print("Done!")
 
-
     #
     # Bodies
     #
@@ -131,6 +130,8 @@ def main(argv=sys.argv):
             if chunk:
                 f.write(chunk)
     print("Saved bodies.jsonl. Converting JSONL to SQL.")
+    DBSession.execute("CREATE TEMP TABLE bodies_tmp (LIKE bodies)")
+    url = str(engine.url) + "::bodies_tmp"
     ds = dshape("var *{ id: ?int64, created_at: ?int64, updated_at: ?int64, name: ?string, "
                 "system_id: ?int64, group_id: ?int64, group_name: ?string, type_id: ?int64, "
                 "type_name: ?string, distance_to_arrival: ?int64, full_spectral_class: ?string, "
@@ -148,7 +149,7 @@ def main(argv=sys.argv):
                 "ring_mass: ?int64, ring_inner_radius: ?float64, ring_outer_radius: ?float64, "
                 "rings: ?json, atmosphere_composition: ?json, solid_composition: ?json, "
                 "materials: ?json, is_landable: ?bool}")
-    url = str(engine.url) + "::" + Body.__tablename__
+    #url = str(engine.url) + "::" + Body.__tablename__
     t = odo('jsonlines://bodies.json', url, dshape=ds)
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX bodies_idx ON bodies(name text_pattern_ops)")
@@ -204,8 +205,9 @@ def main(argv=sys.argv):
             if chunk:
                 f.write(chunk)
     print("Saved stations.json. Updating...")
-
-    url = str(engine.url) + "::" + Station.__tablename__
+    DBSession.execute("CREATE TEMP TABLE stations_tmp (LIKE stations)")
+    url = str(engine.url) + "::stations_tmp"
+    #url = str(engine.url) + "::" + Station.__tablename__
     ds = dshape("var *{  id: ?int64,  name: ?string,  system_id: ?int64,  updated_at: ?int64,  "
                 "max_landing_pad_size: ?string,  distance_to_star: ?int64,  government_id: ?int64,  "
                 "government: ?string,  allegiance_id: ?int64,  allegiance: ?string,  "
@@ -220,7 +222,12 @@ def main(argv=sys.argv):
                 "settlement_security_id: ?int64, settlement_security: ?string, body_id: ?int64,"
                 "controlling_minor_faction_id: ?int64 }")
     t = odo('jsonlines://stations.json', url, dshape=ds)
-    print("Done! Creating indexes...")
+    print("Done! Cleaning stations without body references...")
+    DBSession.execute("DELETE FROM stations_tmp WHERE body_id NOT IN (SELECT b.id from bodies b)")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("UPDATE stations SET id=t.id, name=t.name, system_id=t.system_id, updated_at=t.updated_at, "
+                      "max_landing_pad_size=t.max_landing_pad_size, ")
     DBSession.execute("CREATE INDEX index_stations_systemid_btree ON stations(system_id)")
     mark_changed(DBSession())
     transaction.commit()
