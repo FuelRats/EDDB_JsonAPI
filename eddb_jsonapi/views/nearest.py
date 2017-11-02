@@ -4,20 +4,14 @@ from pyramid.view import (
 )
 from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy import text
-
-from ..mymodels import DBSession
-from ..mymodels import Body
-from ..mymodels import Station
-import json
-from sqlalchemy.ext.declarative import DeclarativeMeta
-
-from sqlalchemy import inspect
+from sqlalchemy import text, inspect
+from ..mymodels import DBSession, Body, Station
 
 
 def object_as_dict(obj):
     return {c.key: getattr(obj, c.key)
             for c in inspect(obj).mapper.column_attrs}
+
 
 db_err_msg = """\
 Pyramid is having a problem using your SQL database.  The problem
@@ -58,16 +52,16 @@ def nearest(request):
         if 'aggressive' in request.params:
             sql = text('SELECT *,(sqrt((systems.X - ' + x + ')^2 + (systems.Y - ' +
                         y + ')^2 + (systems.Z - ' + z + '0)^2)) as DISTANCE from '
-                        'systems WHERE x BETWEEN ' + str(float(x)-cubesize) + ' AND '+ str(float(x)+cubesize) + ' AND '
-                        'y BETWEEN ' + str(float(y)-cubesize) + ' AND ' + str(float(y)+cubesize) +' AND z BETWEEN ' +
-                        str(float(z)-cubesize) + ' AND '+ str(float(z)+cubesize) +' ORDER BY (sqrt((systems.X - ' + x + ')^2 + ' +
-                        '(systems.Y - ' + y + ')^2 + (systems.Z - ' + z + ')^2)) LIMIT ' + str(limit) + ';')
+                        'systems WHERE x BETWEEN ' + str(float(x)-cubesize) + ' AND ' +
+                       str(float(x)+cubesize) + ' AND y BETWEEN ' + str(float(y)-cubesize) +
+                       ' AND ' + str(float(y)+cubesize) +' AND z BETWEEN ' +
+                        str(float(z)-cubesize) + ' AND '+ str(float(z)+cubesize) +
+                       ' ORDER BY DISTANCE LIMIT ' + str(limit) + ';')
         else:
             sql = text('SELECT *,(sqrt((populated_systems.X - ' + x + ')^2 + (populated_systems.Y - ' +
                         y + ')^2 + (populated_systems.Z - ' + z + '0)^2)) as DISTANCE from '
-                        'populated_systems ORDER BY (sqrt((populated_systems.X - ' + x + ')^2 + ' +
-                        '(populated_systems.Y - ' + y + ')^2 + (populated_systems.Z - ' + z + ')^2)) '
-                        ' LIMIT ' + str(limit) + ';')
+                        'populated_systems ORDER BY DISTANCE LIMIT ' + str(limit) + ';')
+
         result = DBSession.execute(sql)
         candidates = []
         ids = []
@@ -81,16 +75,19 @@ def nearest(request):
             results = query.all()
             for row in results:
                 bodies.append(object_as_dict(row))
+
             query = DBSession.query(Station).filter(Station.system_id.in_(tuple(ids)))
             results = query.all()
-
             for row in results:
                 stations.append(object_as_dict(row))
+
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
     if bodies:
-        return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit},
-                'candidates': candidates, 'included': { 'bodies': bodies, 'stations': stations}}
+        return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit, 'cubesize': cubesize,
+                         'include': include},
+                'candidates': candidates, 'included': {'bodies': bodies, 'stations': stations}}
     else:
-        return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit},
+        return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit, 'cubesize':cubesize,
+                         'include': include},
                 'candidates': candidates}
