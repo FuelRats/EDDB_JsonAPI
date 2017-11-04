@@ -89,5 +89,5 @@ def nearest(request):
                 'candidates': candidates, 'included': {'bodies': bodies, 'stations': stations}}
     else:
         return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit, 'cubesize':cubesize,
-                         'include': include},
-                'candidates': candidates}
+                         'included': include},
+                'data': candidates}

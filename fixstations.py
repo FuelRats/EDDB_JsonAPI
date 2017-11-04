@@ -49,7 +49,10 @@ def main(argv=sys.argv):
                 if chunk:
                     f.write(chunk)
         print("Saved stations.json. Creating temporary table and importing.")
-    DBSession.execute("CREATE TABLE stations_tmp (LIKE stations)")
+    DBSession.execute("CREATE TABLE IF NOT EXISTS stations_tmp (LIKE stations)")
+    mark_changed(DBSession())
+    transaction.commit()
+
     url = str(engine.url) + "::stations_tmp"
     ds = dshape("var *{  id: ?int64,  name: ?string,  system_id: ?int64,  updated_at: ?int64,  "
                 "max_landing_pad_size: ?string,  distance_to_star: ?int64,  government_id: ?int64,  "
@@ -65,3 +68,5 @@ def main(argv=sys.argv):
                 "settlement_security_id: ?int64, settlement_security: ?string, body_id: ?int64,"
                 "controlling_minor_faction_id: ?int64 }")
     t = odo('jsonlines://stations.json', url, dshape=ds)
+
+main()
