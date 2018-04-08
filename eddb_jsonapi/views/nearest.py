@@ -85,7 +85,7 @@ def nearest(request):
         return Response(db_err_msg, content_type='text/plain', status=500)
     if bodies:
         return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit, 'cubesize': cubesize,
-                         'include': include},
+                         'included': include},
                 'candidates': candidates, 'included': {'bodies': bodies, 'stations': stations}}
     else:
         return {'meta': {'query_x': x, 'query_y': y, 'query_z': z, 'limit': limit, 'cubesize':cubesize,
