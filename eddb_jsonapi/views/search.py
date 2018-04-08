@@ -50,12 +50,12 @@ def search(request):
             limit = request.params['limit']
         if searchtype == 'lev':
             sql = text('SELECT *, levenshtein(name, \'' + name + '\') AS similarity FROM systems ' +
-                       'WHERE name ~* \'' + name + '\' ORDER BY similarity ASC LIMIT ' + limit)
+                       'WHERE name ~* \'' + name + '\' ORDER BY similarity ASC LIMIT ' + str(limit))
         if searchtype == 'soundex':
             sql = text('SELECT *, similarity(name, \'' + name +
                        '\') AS similarity FROM systems WHERE soundex(name) ' +
                        '= soundex(\'' + name + '\') ORDER BY similarity(name, \'' +
-                       name + '\') DESC LIMIT '+ limit)
+                       name + '\') DESC LIMIT ' + str(limit))
         if searchtype == 'meta':
             if 'sensitivity' not in request.params:
                 sensitivity = 5
@@ -63,10 +63,10 @@ def search(request):
                 sensitivity = request.params['sensitivity']
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
                        'WHERE metaphone(name, ' + str(sensitivity) + ') = metaphone(\'' + name + '\', ' +
-                       str(sensitivity) + ') ORDER BY similarity DESC LIMIT ' + limit)
+                       str(sensitivity) + ') ORDER BY similarity DESC LIMIT ' + str(limit))
         if searchtype == 'dmeta':
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
-                       'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity DESC LIMIT ' + limit)
+                       'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity DESC LIMIT ' + str(limit))
         result = DBSession.execute(sql)
 
         candidates = []
