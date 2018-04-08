@@ -5,7 +5,7 @@ from pyramid.view import (
 from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import text, inspect
-from ..mymodels import DBSession, Body, Station
+from ..mymodels import DBSession, System
 
 
 def object_as_dict(obj):
@@ -30,6 +30,7 @@ try it again.
 """
 valid_searches = {"lev", "soundex", "meta", "dmeta"}
 
+
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='search', renderer='json')
 def search(request):
@@ -38,20 +39,27 @@ def search(request):
         if 'type' in request.params:
             searchtype = request.params['type']
             if searchtype not in valid_searches:
-                return {'meta': {'error' : 'Invalid search type '+searchtype+' specified'}}
+                return {'meta': {'error': 'Invalid search type ' + searchtype + ' specified'}}
         else:
             searchtype = 'lev'
         if 'name' not in request.params:
             return {'meta': {'error': 'No name specified.'}}
         if searchtype == 'lev':
-            sql = text('SELECT *, lev_distance(name, \'' + name + '\') AS similarity FROM systems ' +
-                       ' WHERE name %% \''+name+'\' ORDER BY similarity DESC')
+            sql = text('SELECT *, levenshtein(name, \'' + name + '\') AS similarity FROM systems ' +
+                       'WHERE name % \'' + name + '\' ORDER BY similarity DESC')
         if searchtype == 'soundex':
             sql = text('SELECT *, similarity(name, \'' + name +
                        '\') AS similarity FROM systems WHERE soundex(name) ' +
                        '= soundex(\'' + name + '\') ORDER BY similarity(name, \'' +
                        name + '\') DESC')
+        if searchtype == 'meta':
+            sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
+                       'WHERE metaphone(name) = metaphone(\'' + name + '\') ORDER BY similarity')
+        if searchtype == 'dmeta':
+            sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
+                       'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity')
         result = DBSession.execute(sql)
+
         candidates = []
         ids = []
         for row in result:
