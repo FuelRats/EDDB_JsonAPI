@@ -50,12 +50,12 @@ def search(request):
             sql = text('SELECT *, similarity(name, \'' + name +
                        '\') AS similarity FROM systems WHERE soundex(name) ' +
                        '= soundex(\'' + name + '\') ORDER BY similarity(name, \'' +
-                       name + '\')')
+                       name + '\') DESC')
         result = DBSession.execute(sql)
         candidates = []
         ids = []
         for row in result:
-            candidates.append({'name': row['name'], 'similarity': row['distance'], 'id': row['id']})
+            candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id': row['id']})
             ids.append(row['id'])
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
