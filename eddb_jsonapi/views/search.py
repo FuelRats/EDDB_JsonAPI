@@ -45,11 +45,11 @@ def search(request):
             return {'meta': {'error': 'No name specified.'}}
         if searchtype == 'lev':
             sql = text('SELECT *, lev_distance(name, "' + name +'") AS similarity FROM systems ' +
-                       ' WHERE name % "'+name+'" ORDER BY similarity DESC')
+                       ' WHERE name \% "'+name+'" ORDER BY similarity DESC')
         if searchtype == 'soundex':
             sql = text('SELECT *, similarity(name, "' + name +
                        '") AS similarity FROM systems WHERE soundex(name) ' +
-                       '= soundex(" + name + ") ORDER BY similarity(name, "' +
+                       '= soundex("' + name + '") ORDER BY similarity(name, "' +
                        name + '")')
         result = DBSession.execute(sql)
         candidates = []
