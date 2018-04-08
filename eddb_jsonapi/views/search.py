@@ -58,8 +58,8 @@ def search(request):
             else:
                 sensitivity = request.params['sensitivity']
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
-                       'WHERE metaphone(name, ' + sensitivity + ') = metaphone(\'' + name + '\', ' +
-                       sensitivity + ') ORDER BY similarity')
+                       'WHERE metaphone(name, ' + str(sensitivity) + ') = metaphone(\'' + name + '\', ' +
+                       str(sensitivity) + ') ORDER BY similarity')
         if searchtype == 'dmeta':
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
                        'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity')
