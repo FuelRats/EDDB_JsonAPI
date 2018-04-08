@@ -44,14 +44,18 @@ def search(request):
             searchtype = 'lev'
         if 'name' not in request.params:
             return {'meta': {'error': 'No name specified.'}}
+        if 'limit' not in request.params:
+            limit = 20
+        else:
+            limit = request.params['limit']
         if searchtype == 'lev':
             sql = text('SELECT *, levenshtein(name, \'' + name + '\') AS similarity FROM systems ' +
-                       'WHERE name ~* \'' + name + '\' ORDER BY similarity ASC')
+                       'WHERE name ~* \'' + name + '\' ORDER BY similarity ASC LIMIT ' + limit)
         if searchtype == 'soundex':
             sql = text('SELECT *, similarity(name, \'' + name +
                        '\') AS similarity FROM systems WHERE soundex(name) ' +
                        '= soundex(\'' + name + '\') ORDER BY similarity(name, \'' +
-                       name + '\') DESC')
+                       name + '\') DESC LIMIT '+ limit)
         if searchtype == 'meta':
             if 'sensitivity' not in request.params:
                 sensitivity = 5
@@ -59,10 +63,10 @@ def search(request):
                 sensitivity = request.params['sensitivity']
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
                        'WHERE metaphone(name, ' + str(sensitivity) + ') = metaphone(\'' + name + '\', ' +
-                       str(sensitivity) + ') ORDER BY similarity DESC')
+                       str(sensitivity) + ') ORDER BY similarity DESC LIMIT ' + limit)
         if searchtype == 'dmeta':
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
-                       'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity DESC')
+                       'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity DESC LIMIT ' + limit)
         result = DBSession.execute(sql)
 
         candidates = []
@@ -72,4 +76,4 @@ def search(request):
             ids.append(row['id'])
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
-    return {'meta': {'name': name, 'type': searchtype}, 'data': candidates}
+    return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
