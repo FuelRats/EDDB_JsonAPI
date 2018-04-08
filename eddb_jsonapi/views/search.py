@@ -53,8 +53,13 @@ def search(request):
                        '= soundex(\'' + name + '\') ORDER BY similarity(name, \'' +
                        name + '\') DESC')
         if searchtype == 'meta':
+            if 'sensitivity' not in request.params:
+                sensitivity = 5
+            else:
+                sensitivity = request.params['sensitivity']
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
-                       'WHERE metaphone(name) = metaphone(\'' + name + '\') ORDER BY similarity')
+                       'WHERE metaphone(name, ' + sensitivity + ') = metaphone(\'' + name + '\', ' +
+                       sensitivity + ') ORDER BY similarity')
         if searchtype == 'dmeta':
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
                        'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity')
