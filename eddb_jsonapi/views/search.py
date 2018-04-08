@@ -31,7 +31,7 @@ try it again.
 valid_searches = {"lev", "soundex", "meta", "dmeta"}
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
-@view_config(route_name='nearest', renderer='json')
+@view_config(route_name='search', renderer='json')
 def search(request):
     try:
         name = request.params['name']
