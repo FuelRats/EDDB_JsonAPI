@@ -46,7 +46,7 @@ def search(request):
             return {'meta': {'error': 'No name specified.'}}
         if searchtype == 'lev':
             sql = text('SELECT *, levenshtein(name, \'' + name + '\') AS similarity FROM systems ' +
-                       'WHERE name % \'' + name + '\' ORDER BY similarity DESC')
+                       'WHERE name ~* \'' + name + '\' ORDER BY similarity DESC')
         if searchtype == 'soundex':
             sql = text('SELECT *, similarity(name, \'' + name +
                        '\') AS similarity FROM systems WHERE soundex(name) ' +
@@ -59,10 +59,10 @@ def search(request):
                 sensitivity = request.params['sensitivity']
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
                        'WHERE metaphone(name, ' + str(sensitivity) + ') = metaphone(\'' + name + '\', ' +
-                       str(sensitivity) + ') ORDER BY similarity')
+                       str(sensitivity) + ') ORDER BY similarity DESC')
         if searchtype == 'dmeta':
             sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
-                       'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity')
+                       'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity DESC')
         result = DBSession.execute(sql)
 
         candidates = []
