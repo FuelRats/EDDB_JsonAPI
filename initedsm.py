@@ -47,7 +47,7 @@ def main(argv=sys.argv):
     else:
         print("Downloading systemsWithCoordinates.json from EDSM.net...")
         r = requests.get("https://www.edsm.net/dump/systemsWithCoordinates.json", stream=True)
-        with open('	https://www.edsm.net/dump/systemsWithCoordinates.json', 'wb') as f:
+        with open('systemsWithCoordinates.json', 'wb') as f:
             for chunk in r.iter_content(chunk_size=4096):
                 if chunk:
                     f.write(chunk)
