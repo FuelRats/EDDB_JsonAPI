@@ -61,14 +61,14 @@ class Station(Base):
     haveOutfitting = Column(Boolean)
     otherServices = Column(JSONB)
     updateTime = Column(JSONB)
-    systemId = Column(BigInteger, ForeignKey('systems.id'))
+    systemId = Column(BigInteger)
     systemId64 = Column(BigInteger)
     systemName = Column(Text)
 
 
 class Body(Base):
     __tablename__ = 'bodies'
-    id = Column(BigInteger, primary_key = True)
+    id = Column(BigInteger, primary_key=True)
     id64 = Column(BigInteger)
     bodyId = Column(Integer)
     name = Column(Text)
@@ -98,6 +98,6 @@ class Body(Base):
     axialTilt = Column(Float)
     rings = Column(JSONB)
     updateTime = Column(DateTime)
-    systemId = Column(BigInteger, ForeignKey('systems.id'))
+    systemId = Column(BigInteger)
     systemId64 = Column(BigInteger)
     systemName = Column(Text)

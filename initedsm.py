@@ -1,7 +1,7 @@
 import os, sys, transaction, subprocess
 from datetime import time, datetime, timedelta
 
-from odo import odo, dshape
+from odo import odo, dshape, chunks
 
 import requests
 from pyramid.paster import (
@@ -52,13 +52,23 @@ def main(argv=sys.argv):
             for chunk in r.iter_content(chunk_size=4096):
                 if chunk:
                     f.write(chunk)
+        print("Downloading systems without coordinates...")
+        r = requests.get("https://www.edsm.net/dump/systemsWithoutCoordinates.json")
+        with open('systemsWithoutCoordinates.json', 'wb') as f:
+            for chunk in r.iter_content(chunk_size=4096):
+                if chunk:
+                    f.write(chunk)
+
         print("Saved systems. Converting JSON to SQL.")
 
     ds = dshape("var *{  id: ?int64,  id64: ?int64,  name: ?string,  coords: ?json, "
                 "controllingFaction: ?string,  stations: ?json,  bodies: ?json,  "
                 "date: ?datetime}")
     url = str(engine.url) + "::" + System.__tablename__
-    t = odo('systemsWithCoordinates.json', url, dshape=ds)
+    t = odo(chunks('systemsWithCoordinates.json'), url, dshape=ds)
+    print("Adding systems without coordinates...")
+    ds = dshape("var *{ id: ?int64, id64: ?int64, name: ?string, coords: ?json, date: ?datetime}")
+    t = odo('systemsWithoutCoordinates.json', url, dshape=ds)
     # Reapplying uppercase to systems, as the index being uppercased slows down searches again.
     print("Uppercasing system names...")
     DBSession.execute("UPDATE systems SET name = UPPER(name)")
@@ -92,7 +102,7 @@ def main(argv=sys.argv):
     ds = dshape("var *{  id: ?int64,  id64: ?int64,  name: ?string,  coords: ?json,  "
                 "controllingFaction: ?json,  stations: ?json,  bodies: ?json,  "
                 "date: ?datetime}")
-    t = odo('systemsPopulated.json', url, dshape=ds)
+    t = odo(chunks('systemsPopulated.json'), url, dshape=ds)
 
     print("Uppercasing system names...")
     DBSession.execute("UPDATE populated_systems SET name = UPPER(name)")
@@ -124,7 +134,7 @@ def main(argv=sys.argv):
                     f.write(chunk)
     print("Saved bodies.jsonl. Converting JSONL to SQL.")
     # Call shell and split files into chunks.
-    subprocess.call(["split", "-d -a 3 -C 1G bodies.json chunkedbodies"])
+    #subprocess.call(["split", "-d -a 3 -C 1G --additional-suffix=.json bodies.json chunkedbodies"])
     ds = dshape("var *{  id: ?int64,  id64: ?int64,  bodyId: ?int,  name: ?string,  "
                 "discovery: ?json,  type: ?string,  subType: ?string,  offset: ?int,  "
                 "parents: ?json,  distanceToArrival: ?float64, isLandable: ?bool, "
@@ -136,10 +146,11 @@ def main(argv=sys.argv):
                 "axialTilt: ?float, rings: ?json, updateTime: ?datetime, systemId: ?int64, "
                 "systemId64: ?int64, systemName: ?string}")
     url = str(engine.url) + "::" + Body.__tablename__
-    with os.scandir('.') as filelist:
-        for file in filelist:
-            if file.name.startswith('chunkedbodies') and file.is_file():
-               t = odo(file.name, url, dshape=ds)
+    #with os.scandir('.') as filelist:
+    #    for file in filelist:
+    #        if file.name.startswith('chunkedbodies') and file.is_file():
+    #            t = odo(file.name.tostring(), url, dshape=ds)
+    t = odo(chunks('bodies.json'), url, dshape=ds)
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX bodies_idx ON bodies(name text_pattern_ops)")
     mark_changed(DBSession())
