@@ -31,7 +31,7 @@ class PopulatedSystem(Base):
     id64 = Column(BigInteger)
     name = Column(Text)
     coords = Column(JSONB)
-    controllingFaction = Column(Text)
+    controllingFaction = Column(JSONB)
     stations = Column(JSONB)
     bodies = Column(JSONB)
     date = Column(DateTime)

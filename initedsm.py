@@ -1,4 +1,4 @@
-import os, sys, transaction
+import os, sys, transaction, subprocess
 from datetime import time, datetime, timedelta
 
 from odo import odo, dshape
@@ -90,9 +90,9 @@ def main(argv=sys.argv):
 
     url = str(engine.url) + "::" + PopulatedSystem.__tablename__
     ds = dshape("var *{  id: ?int64,  id64: ?int64,  name: ?string,  coords: ?json,  "
-                "controllingFaction: ?string,  stations: ?json,  bodies: ?json,  "
+                "controllingFaction: ?json,  stations: ?json,  bodies: ?json,  "
                 "date: ?datetime}")
-    t = odo('jsonlines://systemsPopulated.json', url, dshape=ds)
+    t = odo('systemsPopulated.json', url, dshape=ds)
 
     print("Uppercasing system names...")
     DBSession.execute("UPDATE populated_systems SET name = UPPER(name)")
@@ -123,18 +123,23 @@ def main(argv=sys.argv):
                 if chunk:
                     f.write(chunk)
     print("Saved bodies.jsonl. Converting JSONL to SQL.")
-    ds = dshape("var *{ id: ?int64, id64: ?int64, bodyId: ?int, name: ?string, "
-                "discovery: ?json, type: ?string, subType: ?string, offset: ?int, "
-                "parents: ?json, distanceToArrival: ?float, isLandable: ?bool, "
-                "gravity: ?float, earthMasses: ?float, radius: ?float, surfaceTemperature: ?float, "
-                "surfacePressure: ?float, volcanismType: ?string, atmosphereType: ?string, "
-                "atmosphereComposition: ?json, terraformingState: ?string, orbitalPeriod: ?float, "
-                "semiMajorAxis: ?float, orbitalEccentricity: ?float, orbitalInclination: ?float, "
-                "argOfPeriapsis: ?float, rotationalPeriod: ?float, rotationalPeriodTidallyLocked: ?bool, "
+    # Call shell and split files into chunks.
+    subprocess.call(["split", "-d -a 3 -C 1G bodies.json chunkedbodies"])
+    ds = dshape("var *{  id: ?int64,  id64: ?int64,  bodyId: ?int,  name: ?string,  "
+                "discovery: ?json,  type: ?string,  subType: ?string,  offset: ?int,  "
+                "parents: ?json,  distanceToArrival: ?float64, isLandable: ?bool, "
+                "gravity: ?float64, earthMasses: ?float64, radius: ?float64, surfaceTemperature: ?float64, "
+                "surfacePressure: ?float64, volcanismType: ?string, atmosphereType: ?string, "
+                "atmosphereComposition: ?json, terraformingState: ?string, orbitalPeriod: ?float64, "
+                "semiMajorAxis: ?float64, orbitalEccentricity: ?float64, orbitalInclination: ?float64, "
+                "argOfPeriapsis: ?float64, rotationalPeriod: ?float64, rotationalPeriodTidallyLocked: ?bool, "
                 "axialTilt: ?float, rings: ?json, updateTime: ?datetime, systemId: ?int64, "
                 "systemId64: ?int64, systemName: ?string}")
     url = str(engine.url) + "::" + Body.__tablename__
-    t = odo('jsonlines://bodies.json', url, dshape=ds)
+    with os.scandir('.') as filelist:
+        for file in filelist:
+            if file.name.startswith('chunkedbodies') and file.is_file():
+               t = odo(file.name, url, dshape=ds)
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX bodies_idx ON bodies(name text_pattern_ops)")
     mark_changed(DBSession())
@@ -162,11 +167,11 @@ def main(argv=sys.argv):
 
     url = str(engine.url) + "::" + Station.__tablename__
     ds = dshape("var *{  id: ?int64,  marketId: ?int64, type: ?string, name: ?string, "
-                "distanceToArrival: ?float, allegiance: ?string, government: ?string, "
+                "distanceToArrival: ?float64, allegiance: ?string, government: ?string, "
                 "economy: ?string, haveMarket: ?bool, haveShipyard: ?bool, haveOutfitting: ?bool, "
                 "otherServices: ?json, updateTime: ?json, systemId: ?int64, systemId64: ?int64, "
                 "systemName: ?string}")
-    t = odo('jsonlines://stations.json', url, dshape=ds)
+    t = odo('stations.json', url, dshape=ds)
 
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX index_stations_systemid_btree ON stations(system_id)")
