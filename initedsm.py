@@ -65,7 +65,8 @@ def main(argv=sys.argv):
                 "controllingFaction: ?string,  stations: ?json,  bodies: ?json,  "
                 "date: ?datetime}")
     url = str(engine.url) + "::" + System.__tablename__
-    t = odo(chunks('systemsWithCoordinates.json'), url, dshape=ds)
+
+    t = odo('systemsWithCoordinates.json', url, dshape=ds)
     print("Adding systems without coordinates...")
     ds = dshape("var *{ id: ?int64, id64: ?int64, name: ?string, coords: ?json, date: ?datetime}")
     t = odo('systemsWithoutCoordinates.json', url, dshape=ds)
@@ -102,7 +103,7 @@ def main(argv=sys.argv):
     ds = dshape("var *{  id: ?int64,  id64: ?int64,  name: ?string,  coords: ?json,  "
                 "controllingFaction: ?json,  stations: ?json,  bodies: ?json,  "
                 "date: ?datetime}")
-    t = odo(chunks('systemsPopulated.json'), url, dshape=ds)
+    t = odo('systemsPopulated.json', url, dshape=ds)
 
     print("Uppercasing system names...")
     DBSession.execute("UPDATE populated_systems SET name = UPPER(name)")
@@ -135,6 +136,7 @@ def main(argv=sys.argv):
     print("Saved bodies.jsonl. Converting JSONL to SQL.")
     # Call shell and split files into chunks.
     #subprocess.call(["split", "-d -a 3 -C 1G --additional-suffix=.json bodies.json chunkedbodies"])
+    print("Inserting planetary bodies...")
     ds = dshape("var *{  id: ?int64,  id64: ?int64,  bodyId: ?int,  name: ?string,  "
                 "discovery: ?json,  type: ?string,  subType: ?string,  offset: ?int,  "
                 "parents: ?json,  distanceToArrival: ?float64, isLandable: ?bool, "
@@ -150,7 +152,7 @@ def main(argv=sys.argv):
     #    for file in filelist:
     #        if file.name.startswith('chunkedbodies') and file.is_file():
     #            t = odo(file.name.tostring(), url, dshape=ds)
-    t = odo(chunks('bodies.json'), url, dshape=ds)
+    t = odo('bodies.json', url, dshape=ds)
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX bodies_idx ON bodies(name text_pattern_ops)")
     mark_changed(DBSession())
