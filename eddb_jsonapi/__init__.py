@@ -1,7 +1,7 @@
 from pyramid.config import Configurator
 
 from sqlalchemy import engine_from_config
-from . import mymodels
+from . import edsmmodels
 import pyramid_jsonapi
 from pyramid_beaker import set_cache_regions_from_settings
 from pyramid_beaker import session_factory_from_settings
@@ -13,8 +13,8 @@ def main(global_config, **settings):
     set_cache_regions_from_settings(settings)
     session_factory = session_factory_from_settings(settings)
     engine = engine_from_config(settings, 'sqlalchemy.')
-    mymodels.DBSession.configure(bind=engine)
-    mymodels.Base.metadata.bind = engine
+    edsmmodels.DBSession.configure(bind=engine)
+    edsmmodels.Base.metadata.bind = engine
     config = Configurator(settings=settings)
     config.include('pyramid_chameleon')
     config.include('pyramid_jinja2')
@@ -24,8 +24,8 @@ def main(global_config, **settings):
     config.add_route('home', '/')
     config.add_route('nearest', '/nearest')
     config.add_route('search', '/search')
-    pj = pyramid_jsonapi.PyramidJSONAPI(config, mymodels)
-    pyramid_jsonapi.create_jsonapi_using_magic_and_pixie_dust()
+    pj = pyramid_jsonapi.PyramidJSONAPI(config, edsmmodels)
+    pj.create_jsonapi_using_magic_and_pixie_dust()
 
     config.scan()
 

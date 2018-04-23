@@ -35,6 +35,7 @@ class PopulatedSystem(Base):
     stations = Column(JSONB)
     bodies = Column(JSONB)
     date = Column(DateTime)
+    date.info.update({'pyramid_jsonapi': {'visible': False}})
 
 
 class System(Base):
@@ -44,6 +45,7 @@ class System(Base):
     name = Column(Text)
     coords = Column(JSONB)
     date = Column(DateTime)
+    date.info.update({'pyramid_jsonapi': {'visible': False}})
 
 
 class Station(Base):
@@ -61,6 +63,7 @@ class Station(Base):
     haveOutfitting = Column(Boolean)
     otherServices = Column(JSONB)
     updateTime = Column(JSONB)
+    updateTime.info.update({'pyramid_jsonapi': {'visible': False}})
     systemId = Column(BigInteger)
     systemId64 = Column(BigInteger)
     systemName = Column(Text)
@@ -99,6 +102,7 @@ class Body(Base):
     rings = Column(JSONB)
     materials = Column(JSONB)
     updateTime = Column(DateTime)
+    updateTime.info.update({'pyramid_jsonapi': {'visible': False}})
     systemId = Column(BigInteger)
     systemId64 = Column(BigInteger)
     systemName = Column(Text)
@@ -137,6 +141,7 @@ class Star(Base):
     axialTilt = Column(Float)
     belts = Column(JSONB)
     updateTime = Column(DateTime)
+    updateTime.info.update({'pyramid_jsonapi': {'visible': False}})
     systemId = Column(BigInteger)
     systemId64 = Column(BigInteger)
     systemName = Column(Text)

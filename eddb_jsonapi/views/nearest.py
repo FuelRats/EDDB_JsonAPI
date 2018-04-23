@@ -5,7 +5,7 @@ from pyramid.view import (
 from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import text, inspect
-from ..mymodels import DBSession, Body, Station
+from ..edsmmodels import DBSession, Body, Station
 
 
 def object_as_dict(obj):
@@ -62,7 +62,7 @@ def nearest(request):
             sql = text('SELECT *,(sqrt((cast(populated_systems.coords->>\'x\' AS FLOAT) - ' + x +
                        ')^2 + (cast(populated_systems.coords->>\'y\' AS FLOAT) - ' +
                        y + ')^2 + (cast(populated_systems.coords->>\'z\' AS FLOAT) - ' + z +
-                       '0)^2)) as DISTANCE from populated_systems ORDER BY DISTANCE LIMIT ' + str(limit) + ';')
+                       ')^2)) as DISTANCE from populated_systems ORDER BY DISTANCE LIMIT ' + str(limit) + ';')
 
         result = DBSession.execute(sql)
         candidates = []

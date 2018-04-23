@@ -5,7 +5,7 @@ from pyramid.view import (
 from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import text, inspect
-from ..mymodels import DBSession, System
+from ..edsmmodels import DBSession, System
 
 
 def object_as_dict(obj):
