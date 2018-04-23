@@ -24,8 +24,8 @@ def main(global_config, **settings):
     config.add_route('home', '/')
     config.add_route('nearest', '/nearest')
     config.add_route('search', '/search')
-    pyramid_jsonapi.create_jsonapi_using_magic_and_pixie_dust(
-        config, mymodels, lambda view: mymodels.DBSession)
+    pj = pyramid_jsonapi.PyramidJSONAPI(config, mymodels)
+    pyramid_jsonapi.create_jsonapi_using_magic_and_pixie_dust()
 
     config.scan()
 

@@ -126,7 +126,7 @@ class Star(Base):
     surfaceTemperature = Column(BigInteger)
     volcanismType = Column(Text)
     atmosphereType = Column(Text)
-    terraformingState = Colum(Text)
+    terraformingState = Column(Text)
     orbitalPeriod = Column(Float)
     semiMajorAxis = Column(Float)
     orbitalEccentricity = Column(Float)
