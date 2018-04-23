@@ -110,11 +110,30 @@ def main(argv=sys.argv):
     mark_changed(DBSession())
     transaction.commit()
     print("Creating indexes...")
-    DBSession.execute("CREATE INDEX index_populated_system_names_trigram ON populated_systems "
+    DBSession.execute("CREATE INDEX idx_populated_system_names_trigram ON populated_systems "
                       "USING GIN(name gin_trgm_ops)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("CREATE INDEX index_populated_system_names_btree ON populated_systems (name)")
+    print("Indexing coordinates...")
+    DBSession.execute("CREATE INDEX idx_populated_system_names_btree ON populated_systems (name)")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX idx_systems_coord_x on systems (CAST(coords->>'x' AS FLOAT))")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX idx_systems_coord_y on systems (CAST(coords->>'y' AS FLOAT))")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX idx_systems_coord_z on systems (CAST(coords->>'z' AS FLOAT))")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX idx_populated_systems_coord_x on populated_systems (CAST(coords->>'x' AS FLOAT))")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX idx_populated_systems_coord_y on populated_systems (CAST(coords->>'y' AS FLOAT))")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX idx_populated_systems_coord_z on populated_systems (CAST(coords->>'z' AS FLOAT))")
     mark_changed(DBSession())
     transaction.commit()
 
@@ -133,7 +152,7 @@ def main(argv=sys.argv):
             for chunk in r.iter_content(chunk_size=4096):
                 if chunk:
                     f.write(chunk)
-    print("Saved bodies.jsonl. Converting JSONL to SQL.")
+    print("Saved bodies.json. Converting JSON to SQL.")
     # Call shell and split files into chunks.
     #subprocess.call(["split", "-d -a 3 -C 1G --additional-suffix=.json bodies.json chunkedbodies"])
     print("Inserting planetary bodies...")
@@ -148,16 +167,33 @@ def main(argv=sys.argv):
                 "axialTilt: ?float, rings: ?json, updateTime: ?datetime, systemId: ?int64, "
                 "systemId64: ?int64, systemName: ?string}")
     url = str(engine.url) + "::" + Body.__tablename__
-    #with os.scandir('.') as filelist:
-    #    for file in filelist:
-    #        if file.name.startswith('chunkedbodies') and file.is_file():
-    #            t = odo(file.name.tostring(), url, dshape=ds)
-    t = odo('bodies.json', url, dshape=ds)
+    with os.scandir('.') as filelist:
+        for file in filelist:
+            if file.name.startswith('bodies') and file.is_file():
+                t = odo(file.name, url, dshape=ds)
+    print("Inserting stars...")
+    ds = dshape("var *{ id: ?int64,  id64: ?int64,  bodyId: ?int,  name: ?string,  "
+                "discovery: ?json,  type: ?string,  subType: ?string,  offset: ?int,  "
+                "parents: ?json,  distanceToArrival: ?float64, isMainStar: ?bool, "
+                "isScoopable: ?bool, age: ?int64, luminosity: ?string, absoluteMagnitude: ?float, "
+                "solarMasses: ?float64, solarRadius: ?float64, "
+                "volcanismType: ?string, atmosphereType: ?string, "
+                "terraformingState: ?string, orbitalPeriod: ?float64, "
+                "semiMajorAxis: ?float64, orbitalEccentricity: ?float64, orbitalInclination: ?float64, "
+                "argOfPeriapsis: ?float64, rotationalPeriod: ?float64, rotationalPeriodTidallyLocked: ?bool, "
+                "axialTilt: ?float64, belts: ?json, updateTime: ?datetime, systemId: ?int64, systemId64: ?int64, "
+                "systemName: ?string")
+    url = str(engine.url) + "::" + Body.__tablename__
+    with os.scandir('.') as filelist:
+        for file in filelist:
+            if file.name.startswith('stars') and file.is_file():
+                t = odo(file.name, url, dshape=ds)
+
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX bodies_idx ON bodies(name text_pattern_ops)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("CREATE INDEX systemid_idx ON bodies(system_id)")
+    DBSession.execute("CREATE INDEX systemid_idx ON bodies(\"system_id\")")
     mark_changed(DBSession())
     transaction.commit()
     print("Done!")
@@ -187,7 +223,7 @@ def main(argv=sys.argv):
     t = odo('stations.json', url, dshape=ds)
 
     print("Creating indexes...")
-    DBSession.execute("CREATE INDEX index_stations_systemid_btree ON stations(system_id)")
+    DBSession.execute("CREATE INDEX index_stations_systemid_btree ON stations(\"systemId\")")
     mark_changed(DBSession())
     transaction.commit()
     DBSession.execute("CREATE INDEX index_stations_btree ON stations(id)")

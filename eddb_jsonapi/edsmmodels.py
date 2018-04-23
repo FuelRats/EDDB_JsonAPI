@@ -104,7 +104,7 @@ class Body(Base):
     systemName = Column(Text)
 
 
-class Star(base):
+class Star(Base):
     __tablename__ = 'stars'
     id = Column(BigInteger, primary_key=True)
     id64 = Column(BigInteger)

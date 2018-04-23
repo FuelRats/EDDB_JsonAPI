@@ -50,17 +50,19 @@ def nearest(request):
         else:
             cubesize = 200
         if 'aggressive' in request.params:
-            sql = text('SELECT *,(sqrt((systems.X - ' + x + ')^2 + (systems.Y - ' +
-                        y + ')^2 + (systems.Z - ' + z + '0)^2)) as DISTANCE from '
-                        'systems WHERE x BETWEEN ' + str(float(x)-cubesize) + ' AND ' +
-                       str(float(x)+cubesize) + ' AND y BETWEEN ' + str(float(y)-cubesize) +
-                       ' AND ' + str(float(y)+cubesize) +' AND z BETWEEN ' +
-                        str(float(z)-cubesize) + ' AND '+ str(float(z)+cubesize) +
+            sql = text('SELECT *,(sqrt((cast(systems.coords->>\'x\' AS FLOAT) - ' + x + ')^2 + ' +
+                       '(cast(systems.coords->>\'Y\' AS FLOAT) - ' +
+                       y + ')^2 + (cast(systems.coords->>\'z\' AS FLOAT) - ' + z + '0)^2)) as DISTANCE from ' +
+                       'systems WHERE cast(coords->>\'x\' AS FLOAT) BETWEEN ' + str(float(x)-cubesize) + ' AND ' +
+                       str(float(x)+cubesize) + ' AND cast(coords->>\'y\' AS FLOAT) BETWEEN ' + str(float(y)-cubesize) +
+                       ' AND ' + str(float(y)+cubesize) + ' AND cast(coords->>\'z\' AS FLOAT) BETWEEN ' +
+                       str(float(z)-cubesize) + ' AND '+ str(float(z)+cubesize) +
                        ' ORDER BY DISTANCE LIMIT ' + str(limit) + ';')
         else:
-            sql = text('SELECT *,(sqrt((populated_systems.X - ' + x + ')^2 + (populated_systems.Y - ' +
-                        y + ')^2 + (populated_systems.Z - ' + z + '0)^2)) as DISTANCE from '
-                        'populated_systems ORDER BY DISTANCE LIMIT ' + str(limit) + ';')
+            sql = text('SELECT *,(sqrt((cast(populated_systems.coords->>\'x\' AS FLOAT) - ' + x +
+                       ')^2 + (cast(populated_systems.coords->>\'y\' AS FLOAT) - ' +
+                       y + ')^2 + (cast(populated_systems.coords->>\'z\' AS FLOAT) - ' + z +
+                       '0)^2)) as DISTANCE from populated_systems ORDER BY DISTANCE LIMIT ' + str(limit) + ';')
 
         result = DBSession.execute(sql)
         candidates = []
