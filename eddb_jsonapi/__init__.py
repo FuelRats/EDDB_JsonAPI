@@ -23,9 +23,8 @@ def main(global_config, **settings):
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
     config.add_route('nearest', '/nearest')
-    pyramid_jsonapi.create_jsonapi_using_magic_and_pixie_dust(
-        config, mymodels, lambda view: mymodels.DBSession)
-
+    pj = pyramid_jsonapi.PyramidJSONAPI(config, mymodels)
+    pj.create_jsonapi_using_magic_and_pixie_dust()
     config.scan()
 
     return config.make_wsgi_app()
