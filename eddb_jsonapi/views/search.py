@@ -5,7 +5,7 @@ from pyramid.view import (
 from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import text, inspect
-from ..mymodels import DBSession, Body, Station
+from ..mymodels import DBSession, System
 
 
 def object_as_dict(obj):
@@ -30,33 +30,50 @@ try it again.
 """
 valid_searches = {"lev", "soundex", "meta", "dmeta"}
 
+
 @view_defaults(renderer='../templates/mytemplate.jinja2')
-@view_config(route_name='nearest', renderer='json')
+@view_config(route_name='search', renderer='json')
 def search(request):
     try:
         name = request.params['name']
         if 'type' in request.params:
             searchtype = request.params['type']
             if searchtype not in valid_searches:
-                return {'meta': {'error' : 'Invalid search type '+searchtype+' specified'}}
+                return {'meta': {'error': 'Invalid search type ' + searchtype + ' specified'}}
         else:
             searchtype = 'lev'
         if 'name' not in request.params:
             return {'meta': {'error': 'No name specified.'}}
+        if 'limit' not in request.params:
+            limit = 20
+        else:
+            limit = request.params['limit']
         if searchtype == 'lev':
-            sql = text('SELECT *, lev_distance(name) AS similarity FROM systems ' +
-                       ' WHERE name % "'+name+'" ORDER BY similarity DESC')
+            sql = text('SELECT *, levenshtein(name, \'' + name + '\') AS similarity FROM systems ' +
+                       'WHERE name ~* \'' + name + '\' ORDER BY similarity ASC LIMIT ' + str(limit))
         if searchtype == 'soundex':
-            sql = text('SELECT *, similarity(name, "' + name +
-                       '") AS similarity FROM systems WHERE soundex(name) " +'
-                       '= soundex(" + name + ") ORDER BY similarity(name, "' +
-                       name + '")')
+            sql = text('SELECT *, similarity(name, \'' + name +
+                       '\') AS similarity FROM systems WHERE soundex(name) ' +
+                       '= soundex(\'' + name + '\') ORDER BY similarity(name, \'' +
+                       name + '\') DESC LIMIT ' + str(limit))
+        if searchtype == 'meta':
+            if 'sensitivity' not in request.params:
+                sensitivity = 5
+            else:
+                sensitivity = request.params['sensitivity']
+            sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
+                       'WHERE metaphone(name, ' + str(sensitivity) + ') = metaphone(\'' + name + '\', ' +
+                       str(sensitivity) + ') ORDER BY similarity DESC LIMIT ' + str(limit))
+        if searchtype == 'dmeta':
+            sql = text('SELECT *, similarity(name, \'' + name + '\') AS similarity FROM systems ' +
+                       'WHERE dmetaphone(name) = dmetaphone(\'' + name + '\') ORDER BY similarity DESC LIMIT ' + str(limit))
         result = DBSession.execute(sql)
+
         candidates = []
         ids = []
         for row in result:
-            candidates.append({'name': row['name'], 'similarity': row['distance'], 'id': row['id']})
+            candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id': row['id']})
             ids.append(row['id'])
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
-    return {'meta': {'name': name, 'type': searchtype}, 'data': candidates}
+    return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
