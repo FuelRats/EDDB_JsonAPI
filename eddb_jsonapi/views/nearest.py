@@ -34,11 +34,11 @@ try it again.
 @view_config(route_name='nearest', renderer='json')
 def nearest(request):
     try:
-        x = request.params['x']
-        y = request.params['y']
-        z = request.params['z']
+        x = float(request.params['x'])
+        y = float(request.params['y'])
+        z = float(request.params['z'])
         if 'limit' in request.params:
-            limit = request.params['limit']
+            limit = int(request.params['limit'])
         else:
             limit = 10
         if 'include' in request.params:
@@ -46,7 +46,7 @@ def nearest(request):
         else:
             include = False
         if 'cubesize' in request.params:
-            cubesize = request.params['cubesize']
+            cubesize = int(request.params['cubesize'])
         else:
             cubesize = 200
         if 'aggressive' in request.params:
@@ -73,12 +73,12 @@ def nearest(request):
             candidates.append({'name': row['name'], 'distance': row['distance'], 'id': row['id']})
             ids.append(row['id'])
         if include:
-            query = DBSession.query(Body).filter(Body.system_id.in_(tuple(ids)))
+            query = DBSession.query(Body).filter(Body.systemId.in_(tuple(ids)))
             results = query.all()
             for row in results:
                 bodies.append(object_as_dict(row))
 
-            query = DBSession.query(Station).filter(Station.system_id.in_(tuple(ids)))
+            query = DBSession.query(Station).filter(Station.systemId.in_(tuple(ids)))
             results = query.all()
             for row in results:
                 stations.append(object_as_dict(row))

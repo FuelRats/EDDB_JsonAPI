@@ -140,6 +140,7 @@ class Station(Base):
     controlling_minor_faction_id = Column(BigInteger, ForeignKey('factions.id'))
     listings = relationship("Listing")
 
+
 class Station_temp(Base):
     __tablename__ = 'stations_tmp'
     id = Column(Integer, primary_key=True)

@@ -1,6 +1,7 @@
 import os, sys, transaction, subprocess
 from datetime import time, datetime, timedelta
-
+#from psycopg2 import IntegrityError
+from sqlalchemy.exc import IntegrityError
 from odo import odo, dshape, chunks
 
 import requests
@@ -66,7 +67,10 @@ def main(argv=sys.argv):
                 "date: ?datetime}")
     url = str(engine.url) + "::" + System.__tablename__
 
-    t = odo('systemsWithCoordinates.json', url, dshape=ds)
+    try:
+        t = odo('systemsWithCoordinates.json', url, dshape=ds)
+    except IntegrityError as e:
+        print("Integrity Error during system insert: "+e)
     print("Adding systems without coordinates...")
     ds = dshape("var *{ id: ?int64, id64: ?int64, name: ?string, coords: ?json, date: ?datetime}")
     t = odo('systemsWithoutCoordinates.json', url, dshape=ds)
@@ -109,9 +113,15 @@ def main(argv=sys.argv):
     DBSession.execute("UPDATE populated_systems SET name = UPPER(name)")
     mark_changed(DBSession())
     transaction.commit()
-    print("Creating indexes...")
+    print("Creating name indexes...")
     DBSession.execute("CREATE INDEX idx_populated_system_names_trigram ON populated_systems "
                       "USING GIN(name gin_trgm_ops)")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX idx_systems_meta_name on systems (dmetaphone(name))")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX idx_systems_sndx_name on systems (soundex(name))")
     mark_changed(DBSession())
     transaction.commit()
     print("Indexing coordinates...")
