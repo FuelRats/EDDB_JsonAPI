@@ -50,19 +50,19 @@ def nearest(request):
         else:
             cubesize = 200
         if 'aggressive' in request.params:
-            sql = text('SELECT *,(sqrt((cast(systems.coords->>\'x\' AS FLOAT) - ' + x + ')^2 + ' +
-                       '(cast(systems.coords->>\'Y\' AS FLOAT) - ' +
-                       y + ')^2 + (cast(systems.coords->>\'z\' AS FLOAT) - ' + z + '0)^2)) as DISTANCE from ' +
-                       'systems WHERE cast(coords->>\'x\' AS FLOAT) BETWEEN ' + str(float(x)-cubesize) + ' AND ' +
-                       str(float(x)+cubesize) + ' AND cast(coords->>\'y\' AS FLOAT) BETWEEN ' + str(float(y)-cubesize) +
-                       ' AND ' + str(float(y)+cubesize) + ' AND cast(coords->>\'z\' AS FLOAT) BETWEEN ' +
-                       str(float(z)-cubesize) + ' AND '+ str(float(z)+cubesize) +
-                       ' ORDER BY DISTANCE LIMIT ' + str(limit) + ';')
+            sql = text(f"SELECT *,(sqrt((cast(systems.coords->>\'x\' AS FLOAT) - {x})^2 +"
+                       f"(cast(systems.coords->>\'Y\' AS FLOAT) - {y}"
+                       f")^2 + (cast(systems.coords->>\'z\' AS FLOAT) - {z})^2)) as DISTANCE from "
+                       f"systems WHERE cast(coords->>\'x\' AS FLOAT) BETWEEN {str(float(x)-cubesize)} AND"
+                       f"{str(float(x)+cubesize)} AND cast(coords->>\'y\' AS FLOAT) BETWEEN {str(float(y)-cubesize)}"
+                       f" AND {str(float(y)+cubesize)} AND cast(coords->>\'z\' AS FLOAT) BETWEEN "
+                       f"{str(float(z)-cubesize)} AND {str(float(z)+cubesize)}"
+                       f" ORDER BY DISTANCE LIMIT {limit};")
         else:
-            sql = text('SELECT *,(sqrt((cast(populated_systems.coords->>\'x\' AS FLOAT) - ' + x +
-                       ')^2 + (cast(populated_systems.coords->>\'y\' AS FLOAT) - ' +
-                       y + ')^2 + (cast(populated_systems.coords->>\'z\' AS FLOAT) - ' + z +
-                       ')^2)) as DISTANCE from populated_systems ORDER BY DISTANCE LIMIT ' + str(limit) + ';')
+            sql = text(f"SELECT *,(sqrt((cast(populated_systems.coords->>'x' AS FLOAT) - {x}"
+                       f")^2 + (cast(populated_systems.coords->>'y' AS FLOAT) - {y}"
+                       f"y)^2 + (cast(populated_systems.coords->>'z' AS FLOAT) - {z}"
+                       f")^2)) as DISTANCE from populated_systems ORDER BY DISTANCE LIMIT {str(limit)};")
 
         result = DBSession.execute(sql)
         candidates = []

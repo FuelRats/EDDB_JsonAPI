@@ -33,7 +33,7 @@ def main(argv=sys.argv):
         usage(argv)
     config_uri = argv[1]
     setup_logging(config_uri)
-    settings = get_appsettings(config_uri)
+    settings = get_appsettings(config_uri, name='mainapp')
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     Base.metadata.drop_all(engine)
@@ -43,24 +43,24 @@ def main(argv=sys.argv):
     #
     # Systems
     #
-    if os.path.isfile('systemsWithCoordinates.json'):
-        if datetime.fromtimestamp(os.path.getmtime('systemsWithCoordinates.json')) > datetime.today() - timedelta(days=7):
-            print("Using cached systemsWithCoordinates.json")
-    else:
-        print("Downloading systemsWithCoordinates.json from EDSM.net...")
-        r = requests.get("https://www.edsm.net/dump/systemsWithCoordinates.json", stream=True)
-        with open('systemsWithCoordinates.json', 'wb') as f:
-            for chunk in r.iter_content(chunk_size=4096):
-                if chunk:
-                    f.write(chunk)
-        print("Downloading systems without coordinates...")
-        r = requests.get("https://www.edsm.net/dump/systemsWithoutCoordinates.json")
-        with open('systemsWithoutCoordinates.json', 'wb') as f:
-            for chunk in r.iter_content(chunk_size=4096):
-                if chunk:
-                    f.write(chunk)
-
-        print("Saved systems. Converting JSON to SQL.")
+    #if os.path.isfile('systemsWithCoordinates.json'):
+    #    if datetime.fromtimestamp(os.path.getmtime('systemsWithCoordinates.json')) > datetime.today() - timedelta(days=7):
+    #        print("Using cached systemsWithCoordinates.json")
+    #else:
+    #    print("Downloading systemsWithCoordinates.json from EDSM.net...")
+    #    r = requests.get("https://www.edsm.net/dump/systemsWithCoordinates.json", stream=True)
+    #    with open('systemsWithCoordinates.json', 'wb') as f:
+    #        for chunk in r.iter_content(chunk_size=4096):
+    #            if chunk:
+    #                f.write(chunk)
+    #    print("Downloading systems without coordinates...")
+    #    r = requests.get("https://www.edsm.net/dump/systemsWithoutCoordinates.json")
+    #    with open('systemsWithoutCoordinates.json', 'wb') as f:
+    #        for chunk in r.iter_content(chunk_size=4096):
+    #            if chunk:
+    #                f.write(chunk)
+    #
+    #    print("Saved systems. Converting JSON to SQL.")
 
     ds = dshape("var *{  id: ?int64,  id64: ?int64,  name: ?string,  coords: ?json, "
                 "controllingFaction: ?string,  stations: ?json,  bodies: ?json,  "
@@ -91,17 +91,17 @@ def main(argv=sys.argv):
     #
     # Populated Systems
     #
-    if os.path.isfile('systemsPopulated.json'):
-        if datetime.fromtimestamp(os.path.getmtime('systemsPopulated.json')) > datetime.today() - timedelta(days=7):
-            print("Using cached systemsPopulated.json")
-    else:
-        print("Downloading systemsPopulated.json from EDSM.net...")
-        r = requests.get("https://www.edsm.net/dump/systemsPopulated.json", stream=True)
-        with open('systemsPopulated.json', 'wb') as f:
-            for chunk in r.iter_content(chunk_size=4096):
-                if chunk:
-                    f.write(chunk)
-        print("Saved systemsPopulated.json. Converting JSONL to SQL.")
+    #if os.path.isfile('systemsPopulated.json'):
+    #    if datetime.fromtimestamp(os.path.getmtime('systemsPopulated.json')) > datetime.today() - timedelta(days=7):
+    #        print("Using cached systemsPopulated.json")
+    #else:
+    #    print("Downloading systemsPopulated.json from EDSM.net...")
+    #    r = requests.get("https://www.edsm.net/dump/systemsPopulated.json", stream=True)
+    #    with open('systemsPopulated.json', 'wb') as f:
+    #        for chunk in r.iter_content(chunk_size=4096):
+    #            if chunk:
+    #                f.write(chunk)
+    #    print("Saved systemsPopulated.json. Converting JSONL to SQL.")
 
     url = str(engine.url) + "::" + PopulatedSystem.__tablename__
     ds = dshape("var *{  id: ?int64,  id64: ?int64,  name: ?string,  coords: ?json,  "
@@ -152,29 +152,29 @@ def main(argv=sys.argv):
     #
     # Bodies
     #
-    if os.path.isfile('bodies.json'):
-        if datetime.fromtimestamp(os.path.getmtime('bodies.json')) > datetime.today() - timedelta(days=7):
-            print("Using cached bodies.json")
-    else:
-        print("Downloading bodies.json from EDSM.net...")
-        r = requests.get("https://www.edsm.net/dump/bodies.json", stream=True)
-        with open('bodies.json', 'wb') as f:
-            for chunk in r.iter_content(chunk_size=4096):
-                if chunk:
-                    f.write(chunk)
-    print("Saved bodies.json. Converting JSON to SQL.")
+    #if os.path.isfile('bodies.json'):
+    #    if datetime.fromtimestamp(os.path.getmtime('bodies.json')) > datetime.today() - timedelta(days=7):
+    #        print("Using cached bodies.json")
+    #else:
+    #    print("Downloading bodies.json from EDSM.net...")
+    #    r = requests.get("https://www.edsm.net/dump/bodies.json", stream=True)
+    #    with open('bodies.json', 'wb') as f:
+    #        for chunk in r.iter_content(chunk_size=4096):
+    #            if chunk:
+    #                f.write(chunk)
+    #print("Saved bodies.json. Converting JSON to SQL.")
     # Call shell and split files into chunks.
     #subprocess.call(["split", "-d -a 3 -C 1G --additional-suffix=.json bodies.json chunkedbodies"])
     print("Inserting planetary bodies...")
-    ds = dshape("var *{  id: ?int64,  id64: ?int64,  bodyId: ?int,  name: ?string,  "
-                "discovery: ?json,  type: ?string,  subType: ?string,  offset: ?int,  "
+    ds = dshape("var *{  id: ?int64,  id64: ?int64,  bodyId: ?int64,  name: ?string,  "
+                "discovery: ?json,  type: ?string,  subType: ?string,  offset: ?int64,  "
                 "parents: ?json,  distanceToArrival: ?float64, isLandable: ?bool, "
                 "gravity: ?float64, earthMasses: ?float64, radius: ?float64, surfaceTemperature: ?float64, "
                 "surfacePressure: ?float64, volcanismType: ?string, atmosphereType: ?string, "
                 "atmosphereComposition: ?json, terraformingState: ?string, orbitalPeriod: ?float64, "
                 "semiMajorAxis: ?float64, orbitalEccentricity: ?float64, orbitalInclination: ?float64, "
                 "argOfPeriapsis: ?float64, rotationalPeriod: ?float64, rotationalPeriodTidallyLocked: ?bool, "
-                "axialTilt: ?float, rings: ?json, updateTime: ?datetime, systemId: ?int64, "
+                "axialTilt: ?float64, rings: ?json, updateTime: ?datetime, systemId: ?int64, "
                 "systemId64: ?int64, systemName: ?string}")
     url = str(engine.url) + "::" + Body.__tablename__
     with os.scandir('.') as filelist:
@@ -182,10 +182,10 @@ def main(argv=sys.argv):
             if file.name.startswith('bodies') and file.is_file():
                 t = odo(file.name, url, dshape=ds)
     print("Inserting stars...")
-    ds = dshape("var *{ id: ?int64,  id64: ?int64,  bodyId: ?int,  name: ?string,  "
-                "discovery: ?json,  type: ?string,  subType: ?string,  offset: ?int,  "
+    ds = dshape("var *{ id: ?int64,  id64: ?int64,  bodyId: ?int64,  name: ?string,  "
+                "discovery: ?json,  type: ?string,  subType: ?string,  offset: ?int64,  "
                 "parents: ?json,  distanceToArrival: ?float64, isMainStar: ?bool, "
-                "isScoopable: ?bool, age: ?int64, luminosity: ?string, absoluteMagnitude: ?float, "
+                "isScoopable: ?bool, age: ?int64, luminosity: ?string, absoluteMagnitude: ?float64, "
                 "solarMasses: ?float64, solarRadius: ?float64, "
                 "volcanismType: ?string, atmosphereType: ?string, "
                 "terraformingState: ?string, orbitalPeriod: ?float64, "
