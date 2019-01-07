@@ -57,7 +57,7 @@ def nearest(request):
                        f"{str(float(x)+cubesize)} AND cast(coords->>\'y\' AS FLOAT) BETWEEN {str(float(y)-cubesize)}"
                        f" AND {str(float(y)+cubesize)} AND cast(coords->>\'z\' AS FLOAT) BETWEEN "
                        f"{str(float(z)-cubesize)} AND {str(float(z)+cubesize)}"
-                       f" ORDER BY DISTANCE LIMIT {limit};")
+                       f" ORDER BY DISTANCE LIMIT {str(limit)};")
         else:
             sql = text(f"SELECT *,(sqrt((cast(populated_systems.coords->>'x' AS FLOAT) - {x}"
                        f")^2 + (cast(populated_systems.coords->>'y' AS FLOAT) - {y}"

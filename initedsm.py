@@ -16,6 +16,7 @@ from eddb_jsonapi.edsmmodels import (
     DBSession,
     System,
     Body,
+    Star,
     Base,
     PopulatedSystem,
     Station)
@@ -176,7 +177,7 @@ def main(argv=sys.argv):
                 "argOfPeriapsis: ?float64, rotationalPeriod: ?float64, rotationalPeriodTidallyLocked: ?bool, "
                 "axialTilt: ?float64, rings: ?json, updateTime: ?datetime, systemId: ?int64, "
                 "systemId64: ?int64, systemName: ?string}")
-    url = str(engine.url) + "::" + Body.__tablename__
+    url = str(engine.url) + "::" + Star.__tablename__
     with os.scandir('.') as filelist:
         for file in filelist:
             if file.name.startswith('bodies') and file.is_file():
@@ -192,7 +193,7 @@ def main(argv=sys.argv):
                 "semiMajorAxis: ?float64, orbitalEccentricity: ?float64, orbitalInclination: ?float64, "
                 "argOfPeriapsis: ?float64, rotationalPeriod: ?float64, rotationalPeriodTidallyLocked: ?bool, "
                 "axialTilt: ?float64, belts: ?json, updateTime: ?datetime, systemId: ?int64, systemId64: ?int64, "
-                "systemName: ?string")
+                "systemName: ?string}")
     url = str(engine.url) + "::" + Body.__tablename__
     with os.scandir('.') as filelist:
         for file in filelist:
@@ -203,7 +204,13 @@ def main(argv=sys.argv):
     DBSession.execute("CREATE INDEX bodies_idx ON bodies(name text_pattern_ops)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("CREATE INDEX systemid_idx ON bodies(\"system_id\")")
+    DBSession.execute("CREATE INDEX systemid_idx ON bodies(\"systemId\")")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX stars_idx ON stars(name text_pattern_ops)")
+    mark_changed(DBSession())
+    transaction.commit()
+    DBSession.execute("CREATE INDEX stars_systemid_idx ON stars(\"systemId\")")
     mark_changed(DBSession())
     transaction.commit()
     print("Done!")

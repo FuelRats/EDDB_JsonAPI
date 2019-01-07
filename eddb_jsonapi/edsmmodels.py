@@ -27,14 +27,14 @@ Base = declarative_base()
 
 class PopulatedSystem(Base):
     __tablename__ = 'populated_systems'
-    id = Column(BigInteger, primary_key=True)
-    id64 = Column(BigInteger)
-    name = Column(Text)
-    coords = Column(JSONB)
-    controllingFaction = Column(JSONB)
-    stations = Column(JSONB)
-    bodies = Column(JSONB)
-    date = Column(DateTime)
+    id = Column(BigInteger, primary_key=True, doc="Internal system ID")
+    id64 = Column(BigInteger, doc="64-bit system ID")
+    name = Column(Text, doc="System name")
+    coords = Column(JSONB, doc="System coordinates, as a JSON blob with X,Y and Z coordinates as floats.")
+    controllingFaction = Column(JSONB, doc="Controlling faction, in a JSON blob")
+    stations = Column(JSONB, doc="List of stations and their data in a JSON blob")
+    bodies = Column(JSONB, doc="List of bodies and their data, as a JSON Blob")
+    date = Column(DateTime, doc="DateTime of last update to this system")
     date.info.update({'pyramid_jsonapi': {'visible': False}})
 
 
