@@ -51,7 +51,7 @@ def nearest(request):
             cubesize = 200
         if 'aggressive' in request.params:
             sql = text(f"SELECT *,(sqrt((cast(systems.coords->>\'x\' AS FLOAT) - {x})^2 +"
-                       f"(cast(systems.coords->>\'Y\' AS FLOAT) - {y}"
+                       f"(cast(systems.coords->>\'y\' AS FLOAT) - {y}"
                        f")^2 + (cast(systems.coords->>\'z\' AS FLOAT) - {z})^2)) as DISTANCE from "
                        f"systems WHERE cast(coords->>\'x\' AS FLOAT) BETWEEN {str(float(x)-cubesize)} AND"
                        f"{str(float(x)+cubesize)} AND cast(coords->>\'y\' AS FLOAT) BETWEEN {str(float(y)-cubesize)}"

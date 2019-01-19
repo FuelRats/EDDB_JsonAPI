@@ -69,7 +69,10 @@ def main(argv=sys.argv):
     url = str(engine.url) + "::" + System.__tablename__
 
     try:
-        t = odo('systemsWithCoordinates.json', url, dshape=ds)
+        with os.scandir('.') as filelist:
+            for file in filelist:
+                if file.name.startswith('systemsWithCoordinates') and file.is_file():
+                    t = odo(file.name, url, dshape=ds)
     except IntegrityError as e:
         print("Integrity Error during system insert: "+e)
     print("Adding systems without coordinates...")
