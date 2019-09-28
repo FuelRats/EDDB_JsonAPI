@@ -76,7 +76,9 @@ def search(request):
         if xhr is True:
             for row in result:
                 candidates.append(row['name'])
-                return candidates
+                response = Response(body="['Fooelum']", content_type='application/json')
+                response.headerlist = {('access-control-allow-origin', '*')}
+                return response
         else:
             for row in result:
                 candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id': row['id']})
