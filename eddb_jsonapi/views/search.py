@@ -35,27 +35,25 @@ valid_searches = {"lev", "soundex", "meta", "dmeta"}
 @view_config(route_name='search', renderer='json')
 def search(request):
     try:
-        name = request.params['name']
-        if 'type' in request.params:
-            searchtype = request.params['type']
-            if searchtype not in valid_searches:
-                return {'meta': {'error': 'Invalid search type ' + searchtype + ' specified'}}
-        else:
-            searchtype = 'lev'
-        if 'name' not in request.params:
-            return {'meta': {'error': 'No name specified.'}}
-        if 'limit' not in request.params:
-            limit = 20
-        else:
-            limit = request.params['limit']
         if 'xhr' not in request.params:
             xhr = False
+            name = request.params['name']
         else:
             xhr = True
             if 'term' not in request.params:
                 print("No term passed!")
             else:
                 name = request.params['term']
+        if 'type' in request.params:
+            searchtype = request.params['type']
+            if searchtype not in valid_searches:
+                return {'meta': {'error': 'Invalid search type ' + searchtype + ' specified'}}
+        else:
+            searchtype = 'lev'
+        if 'limit' not in request.params:
+            limit = 20
+        else:
+            limit = request.params['limit']
         if searchtype == 'lev':
             sql = text(f"SELECT *, levenshtein(name,  '{name}') AS similarity FROM systems "
                        f"WHERE name ~* '{name}' ORDER BY similarity ASC LIMIT {limit}")
