@@ -48,7 +48,6 @@ def search(request):
             limit = 20
         else:
             limit = request.params['limit']
-
         if 'xhr' not in request.params:
             xhr = False
         else:
@@ -75,9 +74,9 @@ def search(request):
 
         candidates = []
         ids = []
-        if xhr:
+        if xhr is True:
             for row in result:
-                candidates.append(name)
+                candidates.append(row['name'])
                 return candidates
         else:
             for row in result:
