@@ -90,6 +90,10 @@ def main(argv=sys.argv):
     DBSession.execute("CREATE INDEX index_system_names_btree ON systems (name)")
     mark_changed(DBSession())
     transaction.commit()
+    DBSession.execute("CREATE INDEX index_system_names_soundex ON systems USING soundex(name)")
+    mark_changed(DBSession())
+    transaction.commit()
+
     print("Done!")
 
     #
@@ -180,7 +184,7 @@ def main(argv=sys.argv):
                 "argOfPeriapsis: ?float64, rotationalPeriod: ?float64, rotationalPeriodTidallyLocked: ?bool, "
                 "axialTilt: ?float64, rings: ?json, updateTime: ?datetime, systemId: ?int64, "
                 "systemId64: ?int64, systemName: ?string}")
-    url = str(engine.url) + "::" + Star.__tablename__
+    url = str(engine.url) + "::" + Body.__tablename__
     with os.scandir('.') as filelist:
         for file in filelist:
             if file.name.startswith('bodies') and file.is_file():
@@ -197,7 +201,7 @@ def main(argv=sys.argv):
                 "argOfPeriapsis: ?float64, rotationalPeriod: ?float64, rotationalPeriodTidallyLocked: ?bool, "
                 "axialTilt: ?float64, belts: ?json, updateTime: ?datetime, systemId: ?int64, systemId64: ?int64, "
                 "systemName: ?string}")
-    url = str(engine.url) + "::" + Body.__tablename__
+    url = str(engine.url) + "::" + Star.__tablename__
     with os.scandir('.') as filelist:
         for file in filelist:
             if file.name.startswith('stars') and file.is_file():

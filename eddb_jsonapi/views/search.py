@@ -46,10 +46,13 @@ def search(request):
             return {'meta': {'error': 'No name specified.'}}
         if 'limit' not in request.params:
             limit = 20
+        else:
+            limit = request.params['limit']
+
         if 'xhr' not in request.params:
             xhr = False
         else:
-            limit = request.params['limit']
+            xhr = True
         if searchtype == 'lev':
             sql = text(f"SELECT *, levenshtein(name,  '{name}') AS similarity FROM systems "
                        f"WHERE name ~* '{name}' ORDER BY similarity ASC LIMIT {limit}")
