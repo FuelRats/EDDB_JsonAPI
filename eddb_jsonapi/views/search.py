@@ -1,3 +1,5 @@
+import json
+
 from pyramid.view import (
     view_config,
     view_defaults
@@ -76,7 +78,8 @@ def search(request):
         if xhr is True:
             for row in result:
                 candidates.append(row['name'])
-                response = Response(body="['Fooelum']", content_type='application/json')
+                response = Response(content_type='application/json')
+                response.body = json.dumps(candidates)
                 response.headerlist = {('access-control-allow-origin', '*')}
                 return response
         else:
