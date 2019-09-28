@@ -35,15 +35,12 @@ valid_searches = {"lev", "soundex", "meta", "dmeta"}
 @view_config(route_name='search', renderer='json')
 def search(request):
     try:
-        if 'xhr' not in request.params:
+        if 'term' in request.params:
+            xhr = True
+            name = request.params['term']
+        else:
             xhr = False
             name = request.params['name']
-        else:
-            xhr = True
-            if 'term' not in request.params:
-                print("No term passed!")
-            else:
-                name = request.params['term']
         if 'type' in request.params:
             searchtype = request.params['type']
             if searchtype not in valid_searches:
