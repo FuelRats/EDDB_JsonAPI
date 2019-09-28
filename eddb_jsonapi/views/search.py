@@ -78,9 +78,9 @@ def search(request):
         if xhr is True:
             for row in result:
                 candidates.append(row['name'])
-                response = Response(content_type='application/json')
-                response.text = json.dumps(candidates)
-                return response
+            response = Response(content_type='application/json')
+            response.text = json.dumps(candidates)
+            return response
         else:
             for row in result:
                 candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id': row['id']})
