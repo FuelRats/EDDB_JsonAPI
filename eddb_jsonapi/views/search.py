@@ -50,10 +50,12 @@ def search(request):
             limit = request.params['limit']
         if 'xhr' not in request.params:
             xhr = False
-            print("XHR false:")
         else:
             xhr = True
-            print("XHR true!")
+            if 'term' not in request.params:
+                print("No term passed!")
+            else:
+                name = request.params['term']
         if searchtype == 'lev':
             sql = text(f"SELECT *, levenshtein(name,  '{name}') AS similarity FROM systems "
                        f"WHERE name ~* '{name}' ORDER BY similarity ASC LIMIT {limit}")

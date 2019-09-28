@@ -14,7 +14,7 @@ def main(global_config, **settings):
     session_factory = session_factory_from_settings(settings)
     engine = engine_from_config(settings, 'sqlalchemy.')
     edsmmodels.DBSession.configure(bind=engine)
-    edsmmodels.metadata.bind = engine
+    #edsmmodels.metadata.bind = engine
     config = Configurator(settings=settings)
     config.include('pyramid_chameleon')
     config.include('pyramid_jinja2')
