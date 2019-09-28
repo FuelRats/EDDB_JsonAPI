@@ -80,7 +80,6 @@ def search(request):
                 candidates.append(row['name'])
                 response = Response(content_type='application/json')
                 response.text = json.dumps(candidates)
-                response.headerlist = {('access-control-allow-origin', '*')}
                 return response
         else:
             for row in result:
