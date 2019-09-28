@@ -46,6 +46,8 @@ def search(request):
             return {'meta': {'error': 'No name specified.'}}
         if 'limit' not in request.params:
             limit = 20
+        if 'xhr' not in request.params:
+            xhr = False
         else:
             limit = request.params['limit']
         if searchtype == 'lev':
@@ -70,9 +72,15 @@ def search(request):
 
         candidates = []
         ids = []
-        for row in result:
-            candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id': row['id']})
-            ids.append(row['id'])
+        if xhr:
+            for row in result:
+                candidates.append(name)
+                return candidates
+        else:
+            for row in result:
+                candidates.append({'name': row['name'], 'similarity': row['similarity'], 'id': row['id']})
+                ids.append(row['id'])
+            return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
     except DBAPIError:
         return Response(db_err_msg, content_type='text/plain', status=500)
-    return {'meta': {'name': name, 'type': searchtype, 'limit': limit}, 'data': candidates}
+
