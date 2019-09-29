@@ -46,7 +46,7 @@ def search(request):
         if 'term' in request.params:
             xhr = True
             name = request.params['term'].upper()
-            searchtype = "fulltext"
+            searchtype = "lev"
         else:
             xhr = False
             name = request.params['name']
@@ -73,7 +73,7 @@ def search(request):
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                        f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT {str(limit)}")
         if searchtype == "fulltext":
-            sql = text(f"SELECT name FROM systems WHERE name LIKE '{name}' DESC LIMIT {str(limit)}")
+            sql = text(f"SELECT name FROM systems WHERE name LIKE '{name}%' DESC LIMIT {str(limit)}")
         result = DBSession.execute(sql)
 
         candidates = []
