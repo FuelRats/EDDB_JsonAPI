@@ -45,7 +45,7 @@ def search(request):
             searchtype = 'lev'
         if 'term' in request.params:
             xhr = True
-            name = request.params['term'].toupper()
+            name = request.params['term'].upper()
             searchtype = "fulltext"
         else:
             xhr = False
