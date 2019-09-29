@@ -30,25 +30,26 @@ might be caused by one of the following things:
 After you fix the problem, please restart the Pyramid application to
 try it again.
 """
-valid_searches = {"lev", "soundex", "meta", "dmeta"}
+valid_searches = {"lev", "soundex", "meta", "dmeta", "fulltext"}
 
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
 @view_config(route_name='search', renderer='json')
 def search(request):
     try:
-        if 'term' in request.params:
-            xhr = True
-            name = request.params['term']
-        else:
-            xhr = False
-            name = request.params['name']
         if 'type' in request.params:
             searchtype = request.params['type']
             if searchtype not in valid_searches:
                 return {'meta': {'error': 'Invalid search type ' + searchtype + ' specified'}}
         else:
             searchtype = 'lev'
+        if 'term' in request.params:
+            xhr = True
+            name = request.params['term'].toupper()
+            searchtype = "fulltext"
+        else:
+            xhr = False
+            name = request.params['name']
         if 'limit' not in request.params:
             limit = 20
         else:
@@ -71,6 +72,8 @@ def search(request):
         if searchtype == 'dmeta':
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                        f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT {str(limit)}")
+        if searchtype == "fulltext":
+            sql = text(f"SELECT name FROM systems WHERE name LIKE '{name}%' DESC LIMIT {str(limit)}")
         result = DBSession.execute(sql)
 
         candidates = []
