@@ -147,7 +147,7 @@ class Star(Base):
 
 class Landmark(Base):
     __tablename__ = 'landmarks'
-    name = Column(Text)
+    name = Column(Text, primary_key=True)
     x = Column(Float)
     y = Column(Float)
     z = Column(Float)
