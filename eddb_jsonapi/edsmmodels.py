@@ -32,8 +32,6 @@ class PopulatedSystem(Base):
     name = Column(Text, doc="System name")
     coords = Column(JSONB, doc="System coordinates, as a JSON blob with X,Y and Z coordinates as floats.")
     controllingFaction = Column(JSONB, doc="Controlling faction, in a JSON blob")
-    stations = Column(JSONB, doc="List of stations and their data in a JSON blob")
-    bodies = Column(JSONB, doc="List of bodies and their data, as a JSON Blob")
     date = Column(DateTime, doc="DateTime of last update to this system")
     date.info.update({'pyramid_jsonapi': {'visible': False}})
 
@@ -145,3 +143,11 @@ class Star(Base):
     systemId = Column(BigInteger)
     systemId64 = Column(BigInteger)
     systemName = Column(Text)
+
+
+class Landmark(Base):
+    __tablename__ = 'landmarks'
+    name = Column(Text)
+    x = Column(Float)
+    y = Column(Float)
+    z = Column(Float)
