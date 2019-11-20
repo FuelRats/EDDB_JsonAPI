@@ -40,6 +40,7 @@ def main(global_config, **settings):
     config.add_route('home', '/')
     config.add_route('nearest', '/nearest')
     config.add_route('search', '/search')
+    config.add_route('landmark', '/landmark')
     config.set_request_factory(request_factory)
     pj = pyramid_jsonapi.PyramidJSONAPI(config, edsmmodels, lambda view: edsmmodels.DBSession)
     pj.create_jsonapi_using_magic_and_pixie_dust()
