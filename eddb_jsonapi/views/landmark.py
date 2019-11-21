@@ -31,17 +31,44 @@ try it again.
 
 
 @view_defaults(renderer='../templates/mytemplate.jinja2')
-@view_config(route_name='nearest', renderer='json')
+@view_config(route_name='landmark', renderer='json')
 def landmark(request):
+    if "list" in request.params:
+        sql = text("SELECT * from landmarks WHERE TRUE")
+        result = DBSession.execute(sql)
+        landmarks = []
+        for row in result:
+            landmarks.append({'name': row['name'], 'x': row['x'], 'y': row['y'],
+                              'z': row['z']})
+        return {'meta': {'count': len(landmarks)}, 'landmarks': landmarks}
+    if "add" in request.params:
+        name = str(request.params['name'])
+        sql = text(f"SELECT * FROM systems WHERE name = '{name}' LIMIT 1")
+        result = DBSession.execute(sql)
+        sql2 = text(f"SELECT * FROM landmarks WHERE TRUE")
+        result = DBSession.execute(sql2)
+        if name in result:
+            return {'meta': {'error': 'System is already a landmark.'}}
+        if result.rowcount > 0:
+            for row in result:
+                x = float(row['coords']['x'])
+                y = float(row['coords']['y'])
+                z = float(row['coords']['z'])
+            landmark = Landmark(name, x, y, z)
+            request.dbsession.add(landmark)
+            request.dbsession.commit()
+            return {'meta': {'success': 'System added as a landmark.'}}
+        else:
+            return {'meta': {'error': 'System not found.'}}
     try:
         name = str(request.params['name'])
-        sql = text(f"SELECT name FROM systems WHERE name = '{name}%' DESC LIMIT 1")
+        sql = text(f"SELECT * FROM systems WHERE name = '{name}' DESC LIMIT 1")
         result = DBSession.execute(sql)
-        if result:
+        if result.rowcount > 0:
             for row in result:
-                x = float(row['x'])
-                y = float(row['y'])
-                z = float(row['z'])
+                x = float(row['coords']['x'])
+                y = float(row['coords']['y'])
+                z = float(row['coords']['z'])
             sql = text(f"SELECT *,(sqrt((cast(landmarks.x AS FLOAT) - {x}"
                        f")^2 + (cast(landmarks.y AS FLOAT) - {y}"
                        f")^2 + (cast(landmarks.z AS FLOAT) - {z}"
@@ -51,8 +78,7 @@ def landmark(request):
             candidates = []
             ids = []
             for row in result:
-                candidates.append({'name': row['name'], 'distance': row['distance'], 'id': row['id']})
-                ids.append(row['id'])
+                candidates.append({'name': row['name'], 'distance': row['distance']})
         else:
             return {'meta': {'error': 'System not found.'}}
     except DBAPIError:
