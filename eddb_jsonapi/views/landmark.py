@@ -6,6 +6,7 @@ from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import text, inspect
 from ..edsmmodels import DBSession, Landmark
+import transaction
 
 
 def object_as_dict(obj):
@@ -57,7 +58,7 @@ def landmark(request):
                 z = float(row['coords']['z'])
             landmark = Landmark(name=name, x=x, y=y, z=z)
             dbsession.add(landmark)
-            dbsession.commit()
+            transaction.commit()
             return {'meta': {'success': 'System added as a landmark.'}}
         else:
             return {'meta': {'error': 'System not found.'}}
