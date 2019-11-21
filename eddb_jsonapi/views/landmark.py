@@ -5,7 +5,7 @@ from pyramid.view import (
 from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import text, inspect
-from ..edsmmodels import DBSession, Body, Station, Landmark
+from ..edsmmodels import DBSession, Landmark
 
 
 def object_as_dict(obj):
@@ -42,27 +42,28 @@ def landmark(request):
                               'z': row['z']})
         return {'meta': {'count': len(landmarks)}, 'landmarks': landmarks}
     if "add" in request.params:
+        dbsession = DBSession()
         name = str(request.params['name'])
         sql = text(f"SELECT * FROM systems WHERE name = '{name}' LIMIT 1")
-        result = DBSession.execute(sql)
+        result = dbsession.execute(sql)
         sql2 = text(f"SELECT * FROM landmarks WHERE TRUE")
-        result = DBSession.execute(sql2)
-        if name in result:
+        result2 = dbsession.execute(sql2)
+        if name in result2:
             return {'meta': {'error': 'System is already a landmark.'}}
         if result.rowcount > 0:
             for row in result:
                 x = float(row['coords']['x'])
                 y = float(row['coords']['y'])
                 z = float(row['coords']['z'])
-            landmark = Landmark(name, x, y, z)
-            request.dbsession.add(landmark)
-            request.dbsession.commit()
+            landmark = Landmark(name=name, x=x, y=y, z=z)
+            dbsession.add(landmark)
+            dbsession.commit()
             return {'meta': {'success': 'System added as a landmark.'}}
         else:
             return {'meta': {'error': 'System not found.'}}
     try:
         name = str(request.params['name'])
-        sql = text(f"SELECT * FROM systems WHERE name = '{name}' DESC LIMIT 1")
+        sql = text(f"SELECT * FROM systems WHERE name = '{name}' LIMIT 1")
         result = DBSession.execute(sql)
         if result.rowcount > 0:
             for row in result:
