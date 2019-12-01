@@ -56,8 +56,8 @@ def landmark(request):
                 x = float(row['coords']['x'])
                 y = float(row['coords']['y'])
                 z = float(row['coords']['z'])
-            landmark = Landmark(name=name, x=x, y=y, z=z)
-            dbsession.add(landmark)
+            newlandmark = Landmark(name=name, x=x, y=y, z=z)
+            dbsession.add(newlandmark)
             transaction.commit()
             return {'meta': {'success': 'System added as a landmark.'}}
         else:
