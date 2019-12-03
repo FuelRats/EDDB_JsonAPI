@@ -79,10 +79,18 @@ def search(request):
                        f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT {str(limit)}")
         if searchtype == "fulltext":
             sql = text(f"SELECT name FROM systems WHERE name LIKE '{name}%' DESC LIMIT {str(limit)}")
-        result = DBSession.execute(sql)
-
         candidates = []
         ids = []
+
+        # Check if some clever idjit is searching for an exact system match.
+        idjitresult = DBSession.query(System).filter(System.name == name)
+        if idjitresult.count() > 0:
+            for candidate in idjitresult:
+                candidates.append({'name': candidate['name'], 'similiarity': 'Perfect match'})
+            return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
+        # Carry on.
+        result = DBSession.execute(sql)
+
         if xhr is True:
             for row in result:
                 candidates.append(row['name'])
