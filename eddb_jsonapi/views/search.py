@@ -50,17 +50,17 @@ def search(request):
                 searchtype = 'lev'
         if 'term' in request.params:
             xhr = True
-            name = request.params['term'].upper()
+            name = request.params['term'].title()
             searchtype = "lev"
         else:
             xhr = False
-            name = request.params['name']
+            name = request.params['name'].title()
         if 'limit' not in request.params:
             limit = 20
         else:
             limit = request.params['limit']
         if searchtype == 'lev':
-            sql = text(f"SELECT *, levenshtein(name,  '{name}') AS similarity FROM systems "
+            sql = text(f"SELECT *, similarity(name,  '{name}') AS similarity FROM systems "
                        f"WHERE name % '{name}' ORDER BY similarity ASC LIMIT {limit}")
         if searchtype == 'soundex':
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
