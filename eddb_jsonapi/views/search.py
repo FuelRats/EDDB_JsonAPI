@@ -43,8 +43,8 @@ def search(request):
                 return {'meta': {'error': 'Invalid search type ' + searchtype + ' specified'}}
         else:
             if len(request.params['name'].split()) <= 2:
-                # Single or double word system name, use soundex.
-                searchtype = 'soundex'
+                # Single or double word system name, use dmeta.
+                searchtype = 'dmeta'
             else:
                 # New implementation for lev, try tgrm similarity instead.
                 searchtype = 'lev'
