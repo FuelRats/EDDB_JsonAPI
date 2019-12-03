@@ -42,12 +42,12 @@ def search(request):
             if searchtype not in valid_searches:
                 return {'meta': {'error': 'Invalid search type ' + searchtype + ' specified'}}
         else:
-            if len(request.params['name'].split()) < 2:
+            if len(request.params['name'].split()) <= 2:
                 # Single or double word system name, use soundex.
                 searchtype = 'soundex'
             else:
-                # Default to dmetaphone instead of Levenshtein
-                searchtype = 'dmeta'
+                # New implementation for lev, try tgrm similarity instead.
+                searchtype = 'lev'
         if 'term' in request.params:
             xhr = True
             name = request.params['term'].upper()
@@ -61,7 +61,7 @@ def search(request):
             limit = request.params['limit']
         if searchtype == 'lev':
             sql = text(f"SELECT *, levenshtein(name,  '{name}') AS similarity FROM systems "
-                       f"WHERE name ~* '{name}' ORDER BY similarity ASC LIMIT {limit}")
+                       f"WHERE name % '{name}' ORDER BY similarity ASC LIMIT {limit}")
         if searchtype == 'soundex':
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                        f"WHERE soundex(name) = soundex('{name}') ORDER BY "
