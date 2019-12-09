@@ -44,8 +44,8 @@ def landmark(request):
         return {'meta': {'count': len(landmarks)}, 'landmarks': landmarks}
     if "add" in request.params:
         dbsession = DBSession()
-        name = str(request.params['name']).Title()
-        sql = text(f"SELECT * FROM systems WHERE name ~* '{name}' LIMIT 1")
+        name = str(request.params['name'])
+        sql = text(f"SELECT * FROM systems WHERE name = '{name}' LIMIT 1")
         result = dbsession.execute(sql)
         sql2 = text(f"SELECT * FROM landmarks WHERE TRUE")
         result2 = dbsession.execute(sql2)
@@ -65,7 +65,7 @@ def landmark(request):
             return {'meta': {'error': 'System not found.'}}
     try:
         name = str(request.params['name'])
-        sql = text(f"SELECT * FROM systems WHERE name ~* '{name}' LIMIT 1")
+        sql = text(f"SELECT * FROM systems WHERE name = '{name}' LIMIT 1")
         result = DBSession.execute(sql)
         if result.rowcount > 0:
             for row in result:
