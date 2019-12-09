@@ -65,7 +65,7 @@ def search(request):
             limit = request.params['limit']
         if searchtype == 'lev':
             sql = text(f"SELECT *, similarity(name,  '{name}') AS similarity FROM systems "
-                       f"WHERE name % '{name}' ORDER BY similarity DESC LIMIT {limit}")
+                       f"WHERE name ~* '{name}' ORDER BY similarity DESC LIMIT {limit}")
         if searchtype == 'soundex':
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                        f"WHERE soundex(name) = soundex('{name}') ORDER BY "
