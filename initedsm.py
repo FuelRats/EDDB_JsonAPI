@@ -1,8 +1,8 @@
-import os, sys, transaction, subprocess
-from datetime import time, datetime, timedelta
+import os, sys, transaction, bz2
+from datetime import datetime, timedelta
 # from psycopg2 import IntegrityError
 from sqlalchemy.exc import IntegrityError
-from odo import odo, dshape, chunks
+from odo import odo, dshape
 
 import requests
 from pyramid.paster import (
@@ -18,10 +18,10 @@ from eddb_jsonapi.edsmmodels import (
     Body,
     Star,
     Base,
-    PopulatedSystem,
-    Station)
+    PopulatedSystem
+)
 
-host = "https://db.fuelrats.com/"
+host = "https://downloads.spansh.co.uk/"
 
 
 def usage(argv):
@@ -45,44 +45,44 @@ def main(argv=sys.argv):
 
     # Systems
 
-    if os.path.isfile('systemsWithCoordinates.csv'):
-        if datetime.fromtimestamp(os.path.getmtime('systemsWithCoordinates.csv')) > datetime.today() - timedelta(
+    if os.path.isfile('systemsWithCoordinates.csv.bz2'):
+        if datetime.fromtimestamp(os.path.getmtime('systemsWithCoordinates.csv.bz2')) > datetime.today() - timedelta(
                 days=7):
-            print("Using cached systemsWithCoordinates.csv")
+            print("Using cached systemsWithCoordinates.csv.bz2")
     else:
         print("Downloading systemsWithCoordinates.json from Spansh...")
-        r = requests.get(f"{host}/dump/systemsWithCoordinates.csv", stream=True)
-        with open('systemsWithCoordinates.csv', 'wb') as f:
+        r = requests.get(f"{host}/systemsWithCoordinates.csv.bz2", stream=True)
+        with open('systemsWithCoordinates.csv.bz2', 'wb') as f:
             for chunk in r.iter_content(chunk_size=4096):
                 if chunk:
                     f.write(chunk)
         print("Downloading systems without coordinates...")
-        r = requests.get(f"{host}/dump/systemsWithoutCoordinates.csv")
-        with open('systemsWithoutCoordinates.csv', 'wb') as f:
+        r = requests.get(f"{host}/systemsWithoutCoordinates.csv.bz2")
+        with open('systemsWithoutCoordinates.csv.bz2', 'wb') as f:
             for chunk in r.iter_content(chunk_size=4096):
                 if chunk:
                     f.write(chunk)
 
-    #    print("Saved systems. Converting JSON to SQL.")
+    print("Saved systems. Converting JSON to SQL.")
     ds = dshape("var *{  id64: ?int64,  name: ?string,  coords: ?json, "
                 "controllingFaction: ?string,  date: ?datetime}")
     url = str(engine.url) + "::" + System.__tablename__
-
     try:
-        with os.scandir('.') as filelist:
-            for file in filelist:
-                if file.name.startswith('systemsWithCoordinates') and file.is_file():
-                    t = odo(file.name, url, dshape=ds)
+        with bz2.BZ2File('systemsWithCoordinates.csv.bz2') as infile:
+            t = odo(infile, url, dshape=ds)
     except IntegrityError as e:
         print("Integrity Error during system insert: " + e)
+
     print("Adding systems without coordinates...")
     ds = dshape("var *{ id64: ?int64, name: ?string, coords: ?json, date: ?datetime}")
-    t = odo('systemsWithoutCoordinates.csv', url, dshape=ds)
+    with bz2.BZ2File('systemsWithoutCoordinates.csv') as infile:
+        t = odo(infile, url, dshape=ds)
     # Reapplying uppercase to systems, as the index being uppercased slows down searches again.
-    print("Uppercasing system names...")
-    DBSession.execute("UPDATE systems SET name = UPPER(name)")
-    mark_changed(DBSession())
-    transaction.commit()
+    # Not uppercasing presently, doing it all in original case.
+    # print("Uppercasing system names...")
+    # DBSession.execute("UPDATE systems SET name = UPPER(name)")
+    # mark_changed(DBSession())
+    # transaction.commit()
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX index_system_names_trigram ON systems USING GIN(name gin_trgm_ops)")
     mark_changed(DBSession())
@@ -93,43 +93,44 @@ def main(argv=sys.argv):
     DBSession.execute("CREATE INDEX index_system_names_soundex ON systems USING soundex(name)")
     mark_changed(DBSession())
     transaction.commit()
-
+    DBSession.execute("CREATE INDEX index_system_names_upper ON systems (upper(name) VARCHAR_PATTERN_OPS)")
     print("Done!")
 
     #
     # Populated Systems
     #
-    # if os.path.isfile('systemsPopulated.json'):
-    #    if datetime.fromtimestamp(os.path.getmtime('systemsPopulated.json')) > datetime.today() - timedelta(days=7):
-    #        print("Using cached systemsPopulated.json")
-    # else:
-    #    print("Downloading systemsPopulated.json from EDSM.net...")
-    #    r = requests.get("https://www.edsm.net/dump/systemsPopulated.json", stream=True)
-    #    with open('systemsPopulated.json', 'wb') as f:
-    #        for chunk in r.iter_content(chunk_size=4096):
-    #            if chunk:
-    #                f.write(chunk)
-    #    print("Saved systemsPopulated.json. Converting JSONL to SQL.")
+    if os.path.isfile('systemsPopulated.csv.bz2'):
+        if datetime.fromtimestamp(os.path.getmtime('systemsPopulated.csv.bz2')) > datetime.today() - timedelta(days=7):
+            print("Using cached systemsPopulated.csv.bz2")
+    else:
+        print("Downloading systemsPopulated.csv from Spansh...")
+        r = requests.get(f"https://{host}/systemsPopulated.csv.bz2", stream=True)
+        with open('systemsPopulated.csv.bz2', 'wb') as f:
+            for chunk in r.iter_content(chunk_size=4096):
+                if chunk:
+                    f.write(chunk)
+        print("Saved systemsPopulated.csv.bz2. Inserting...")
 
     url = str(engine.url) + "::" + PopulatedSystem.__tablename__
     ds = dshape("var *{  id: ?int64,  id64: ?int64,  name: ?string,  coords: ?json,  "
                 "controllingFaction: ?json,  stations: ?json,  bodies: ?json,  "
                 "date: ?datetime}")
-    t = odo('systemsPopulated.json', url, dshape=ds)
+    with bz2.BZ2File('systemsPopulated.csv.bz2') as infile:
+        t = odo(infile, url, dshape=ds)
 
-    print("Uppercasing system names...")
-    DBSession.execute("UPDATE populated_systems SET name = UPPER(name)")
-    mark_changed(DBSession())
-    transaction.commit()
+    # print("Uppercasing system names...")
+    # DBSession.execute("UPDATE populated_systems SET name = UPPER(name)")
+    # mark_changed(DBSession())
+    # transaction.commit()
     print("Creating name indexes...")
     DBSession.execute("CREATE INDEX idx_populated_system_names_trigram ON populated_systems "
                       "USING GIN(name gin_trgm_ops)")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("CREATE INDEX idx_systems_meta_name on systems (dmetaphone(name))")
+    DBSession.execute("CREATE INDEX idx_populated_systems_meta_name on populated_systems (dmetaphone(name))")
     mark_changed(DBSession())
     transaction.commit()
-    DBSession.execute("CREATE INDEX idx_systems_sndx_name on systems (soundex(name))")
+    DBSession.execute("CREATE INDEX idx_populated_systems_sndx_name on populated_systems (soundex(name))")
     mark_changed(DBSession())
     transaction.commit()
     print("Indexing coordinates...")
@@ -160,17 +161,24 @@ def main(argv=sys.argv):
     #
     # Bodies
     #
-    # if os.path.isfile('bodies.json'):
-    #    if datetime.fromtimestamp(os.path.getmtime('bodies.json')) > datetime.today() - timedelta(days=7):
-    #        print("Using cached bodies.json")
-    # else:
-    #    print("Downloading bodies.json from EDSM.net...")
-    #    r = requests.get("https://www.edsm.net/dump/bodies.json", stream=True)
-    #    with open('bodies.json', 'wb') as f:
-    #        for chunk in r.iter_content(chunk_size=4096):
-    #            if chunk:
-    #                f.write(chunk)
-    # print("Saved bodies.json. Converting JSON to SQL.")
+    if os.path.isfile('bodies.csv.bz2'):
+        if datetime.fromtimestamp(os.path.getmtime('bodies.json')) > datetime.today() - timedelta(days=7):
+            print("Using cached bodies.json")
+    else:
+        print("Downloading planets.csv.bz2 from Spansh...")
+        r = requests.get(f"https://{host}/planets.csv.bz2", stream=True)
+        with open('planets.csv.bz2', 'wb') as f:
+            for chunk in r.iter_content(chunk_size=4096):
+                if chunk:
+                    f.write(chunk)
+        print("Downloading stars.csv.bz2 from Spansh...")
+        r = requests.get(f"https://{host}/stars.csv.bz2", stream=True)
+        with open('stars.csv.bz2', 'wb') as f:
+            for chunk in r.iter_content(chunk_size=4096):
+                if chunk:
+                    f.write(chunk)
+
+    print("Saved bodies. Inserting to SQL..")
     # Call shell and split files into chunks.
     # subprocess.call(["split", "-d -a 3 -C 1G --additional-suffix=.json bodies.json chunkedbodies"])
     print("Inserting planetary bodies...")
@@ -185,10 +193,8 @@ def main(argv=sys.argv):
                 "axialTilt: ?float64, rings: ?json, updateTime: ?datetime, systemId: ?int64, "
                 "systemId64: ?int64, systemName: ?string}")
     url = str(engine.url) + "::" + Body.__tablename__
-    with os.scandir('.') as filelist:
-        for file in filelist:
-            if file.name.startswith('bodies') and file.is_file():
-                t = odo(file.name, url, dshape=ds)
+    with bz2.BZ2File('planets.csv.bz2') as infile:
+        t = odo(infile, url, dshape=ds)
     print("Inserting stars...")
     ds = dshape("var *{ id: ?int64,  id64: ?int64,  bodyId: ?int64,  name: ?string,  "
                 "discovery: ?json,  type: ?string,  subType: ?string,  offset: ?int64,  "
@@ -202,11 +208,8 @@ def main(argv=sys.argv):
                 "axialTilt: ?float64, belts: ?json, updateTime: ?datetime, systemId: ?int64, systemId64: ?int64, "
                 "systemName: ?string}")
     url = str(engine.url) + "::" + Star.__tablename__
-    with os.scandir('.') as filelist:
-        for file in filelist:
-            if file.name.startswith('stars') and file.is_file():
-                t = odo(file.name, url, dshape=ds)
-
+    with bz2.BZ2File('stars.csv.bz2') as infile:
+        t = odo(infile, url, dshape=ds)
     print("Creating indexes...")
     DBSession.execute("CREATE INDEX bodies_idx ON bodies(name text_pattern_ops)")
     mark_changed(DBSession())
@@ -226,33 +229,33 @@ def main(argv=sys.argv):
     # Stations
     #
 
-    if os.path.isfile('stations.json'):
-        if datetime.fromtimestamp(os.path.getmtime('stations.json')) > datetime.today() - timedelta(days=7):
-            print("Using cached stations.json")
-    else:
-        print("Downloading stations.json from EDSM.net...")
-        r = requests.get("https://www.edsm.net/dump/stations.json", stream=True)
-        with open('stations.json', 'wb') as f:
-            for chunk in r.iter_content(chunk_size=4096):
-                if chunk:
-                    f.write(chunk)
-        print("Saved stations.json. Converting JSONL to SQL.")
+    #if os.path.isfile('stations.json'):
+    #    if datetime.fromtimestamp(os.path.getmtime('stations.json')) > datetime.today() - timedelta(days=7):
+    #        print("Using cached stations.json")
+    #else:
+    #    print("Downloading stations.json from EDSM.net...")
+    #    r = requests.get("https://www.edsm.net/dump/stations.json", stream=True)
+    #    with open('stations.json', 'wb') as f:
+    #        for chunk in r.iter_content(chunk_size=4096):
+    #            if chunk:
+    #                f.write(chunk)
+    #    print("Saved stations.json. Converting JSONL to SQL.")
 
-    url = str(engine.url) + "::" + Station.__tablename__
-    ds = dshape("var *{  id: ?int64,  marketId: ?int64, type: ?string, name: ?string, "
-                "distanceToArrival: ?float64, allegiance: ?string, government: ?string, "
-                "economy: ?string, haveMarket: ?bool, haveShipyard: ?bool, haveOutfitting: ?bool, "
-                "otherServices: ?json, updateTime: ?json, systemId: ?int64, systemId64: ?int64, "
-                "systemName: ?string}")
-    t = odo('stations.json', url, dshape=ds)
+    #url = str(engine.url) + "::" + Station.__tablename__
+    #ds = dshape("var *{  id: ?int64,  marketId: ?int64, type: ?string, name: ?string, "
+    #            "distanceToArrival: ?float64, allegiance: ?string, government: ?string, "
+    #            "economy: ?string, haveMarket: ?bool, haveShipyard: ?bool, haveOutfitting: ?bool, "
+    #            "otherServices: ?json, updateTime: ?json, systemId: ?int64, systemId64: ?int64, "
+    #            "systemName: ?string}")
+    #t = odo('stations.json', url, dshape=ds)
 
-    print("Creating indexes...")
-    DBSession.execute("CREATE INDEX index_stations_systemid_btree ON stations(\"systemId\")")
-    mark_changed(DBSession())
-    transaction.commit()
-    DBSession.execute("CREATE INDEX index_stations_btree ON stations(id)")
-    mark_changed(DBSession())
-    transaction.commit()
+    #print("Creating indexes...")
+    #DBSession.execute("CREATE INDEX index_stations_systemid_btree ON stations(\"systemId\")")
+    #mark_changed(DBSession())
+    #transaction.commit()
+    #DBSession.execute("CREATE INDEX index_stations_btree ON stations(id)")
+    #mark_changed(DBSession())
+    #transaction.commit()
     print("Done!")
 
 
