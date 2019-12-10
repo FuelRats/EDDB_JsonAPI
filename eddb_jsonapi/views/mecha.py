@@ -38,6 +38,8 @@ def mecha(request):
         return {'meta': {'error': 'No search term in \'name\' parameter!'}}
     candidates = []
     name = request.params['name']
+    if len(name) < 3:
+        return {'meta': {'error': 'Search term too short (Min 3 characters)'}}
     pmatch = DBSession.query(System).filter(System.name == name)
     for candidate in pmatch:
         candidates.append({'name': candidate.name, 'similarity': '1.0'})
