@@ -53,7 +53,7 @@ def mecha(request):
         candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
     if len(candidates) < 1:
         # Try an ILIKE with a wildcard at the end.
-        pmatch = DBSession.query(System).Filter(System.name.like(name))
+        pmatch = DBSession.query(System).filter(System.name.like(name))
         for candidates in pmatch:
             candidates.append({'name': candidate[0].name, 'similarity': "1.0"})
         if len(candidates) > 0:
