@@ -45,13 +45,19 @@ def mecha(request):
         candidates.append({'name': candidate.name, 'similarity': '1.0'})
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
-    # Try an indexed ilike on the name, trailing wildcard only.
+    # Try an indexed ilike on the name, no wildcard.
     sql = text(f"SELECT *, similarity(name,  '{name}') AS similarity FROM systems "
-               f"WHERE name ILIKE '{name}%' ORDER BY similarity DESC LIMIT 5")
+               f"WHERE name ILIKE '{name}' ORDER BY similarity DESC LIMIT 5")
     result = DBSession.execute(sql)
     for candidate in result:
         candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
     if len(candidates) < 1:
+        # Try an ILIKE with a wildcard at the end.
+        pmatch = DBSession.query(System).Filter(System.name.like(name))
+        for candidates in pmatch:
+            candidates.append({'name': candidate[0].name, 'similarity': "1.0"})
+        if len(candidates) > 0:
+            return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
         # Try a trigram similarity search if English-ish system name
         if len(name.split(' ')) < 2:
             pmatch = DBSession.query(System, func.similarity(System.name, name).label('similarity')).\
