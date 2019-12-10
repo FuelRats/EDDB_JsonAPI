@@ -47,7 +47,7 @@ def mecha(request):
     sql = text(f"SELECT *, similarity(name,  '{name}') AS similarity FROM systems "
                f"WHERE name ILIKE '{name}%' ORDER BY similarity DESC LIMIT 5")
     result = DBSession.execute(sql)
-    if result.returns_rows():
+    if result.returns_rows:
         for candidate in result:
             candidates.append(candidate)
     else:
