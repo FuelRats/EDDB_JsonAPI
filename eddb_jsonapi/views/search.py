@@ -54,11 +54,11 @@ def search(request):
             xhr = True
             if len(request.params['term']) <= 2:
                 return {'meta': {'error': 'Typeahead search term too short!'}}  # Nope!
-            name = request.params['term'].title()
+            name = request.params['term']
             searchtype = "lev"
         else:
             xhr = False
-            name = request.params['name'].title()
+            name = request.params['name']
         if 'limit' not in request.params:
             limit = 20
         else:
