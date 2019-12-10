@@ -48,13 +48,13 @@ def mecha(request):
                f"WHERE name ILIKE '{name}%' ORDER BY similarity DESC LIMIT 5")
     result = DBSession.execute(sql)
     for candidate in result:
-        candidates.append(candidate)
+        candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
     if len(candidates) < 1:
         sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                    f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT 5")
         result = DBSession.execute(sql)
         for candidate in result:
-            candidates.append(candidate)
+            candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
         if len(candidates) < 1:
             # We ain't got shit. Give up.
             return {'meta': {'name': name, 'error': 'No hits.'}}
