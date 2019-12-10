@@ -52,10 +52,11 @@ def mecha(request):
     if len(candidates) < 1:
         # Try a trigram similarity search if English-ish system name
         if len(name.split(' ')) < 2:
-            pmatch = DBSession.query(System).filter(System.name % name)
+            pmatch = DBSession.query(System, func.similarity(System.name, name).label('similarity')).\
+                filter(System.name % name)
             if pmatch.count() > 0:
                 for candidate in pmatch:
-                    candidates.append({'name': candidate.name, 'similarity': '1.0'})
+                    candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
         else:
             # Last effort, try a dimetaphone search.
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
