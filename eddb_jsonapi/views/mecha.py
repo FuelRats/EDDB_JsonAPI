@@ -61,7 +61,7 @@ def mecha(request):
         # Try a trigram similarity search if English-ish system name
         if len(name.split(' ')) < 2:
             pmatch = DBSession.query(System, func.similarity(System.name, name).label('similarity')).\
-                filter(System.name % name).order_by(func.similarity(System.name, name))
+                filter(System.name % name).order_by(func.similarity(System.name, name).desc())
             if pmatch.count() > 0:
                 for candidate in pmatch:
                     candidates.append({'name': candidate[0].name, 'similarity': candidate[1]})
