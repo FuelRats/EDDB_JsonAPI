@@ -56,7 +56,7 @@ def mecha(request):
                 filter(System.name % name)
             if pmatch.count() > 0:
                 for candidate in pmatch:
-                    candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
+                    candidates.append({'name': candidate[0].name, 'similarity': candidate[1].similarity})
         else:
             # Last effort, try a dimetaphone search.
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
