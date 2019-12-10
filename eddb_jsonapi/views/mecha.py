@@ -50,7 +50,7 @@ def mecha(request):
     for candidate in result:
         candidates.append(candidate)
     if len(candidates) < 1:
-        sql = text(f"SELECT *, similarity(name,  {name}) AS similarity FROM systems "
+        sql = text(f"SELECT *, similarity(name,  '{name}') AS similarity FROM systems "
                    f"WHERE metaphone(name, '5') = metaphone('{name}', "
                    f"'5') ORDER BY similarity DESC LIMIT 5")
         result = DBSession.execute(sql)
