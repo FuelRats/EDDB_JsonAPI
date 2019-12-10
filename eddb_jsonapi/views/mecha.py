@@ -50,12 +50,20 @@ def mecha(request):
     for candidate in result:
         candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
     if len(candidates) < 1:
-        sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
-                   f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT 5")
-        result = DBSession.execute(sql)
-        for candidate in result:
-            candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
-        if len(candidates) < 1:
-            # We ain't got shit. Give up.
-            return {'meta': {'name': name, 'error': 'No hits.'}}
+        # Try a trigram similarity search if English-ish system name
+        if len(name.split(' ')) < 2:
+            pmatch = DBSession.query(System).filter(System.name % name)
+            if pmatch.count() > 0:
+                for candidate in pmatch:
+                    candidates.append({'name': candidate.name, 'similarity': '1.0'})
+        else:
+            # Last effort, try a dimetaphone search.
+            sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
+                       f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT 5")
+            result = DBSession.execute(sql)
+            for candidate in result:
+                candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
+    if len(candidates) < 1:
+        # We ain't got shit. Give up.
+        return {'meta': {'name': name, 'error': 'No hits.'}}
     return {'meta': {'name': name}, 'data': candidates}
