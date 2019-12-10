@@ -41,7 +41,7 @@ def mecha(request):
     pmatch = DBSession.query(System).filter(System.name == name)
     for candidate in pmatch:
         candidates.append({'name': candidate.name, 'similarity': '1.0'})
-    if len(candidates) < 1:
+    if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
     # Try an indexed ilike on the name, trailing wildcard only.
     sql = text(f"SELECT *, similarity(name,  '{name}') AS similarity FROM systems "
