@@ -15,18 +15,29 @@ requires = [
     'pyramid_debugtoolbar',
     'waitress',
     'sqlalchemy',
-    'zope.sqlalchemy', 'requests', 'odo', 'wsgicors', 'pyramid_jsonapi',
-    'psycopg2', 'odo', 'pyramid_beaker', 'aiopyramid', 'gunicorn', 'ijson', 'transaction'
-    ]
+    # FIXME https://github.com/zopefoundation/zope.sqlalchemy/blob/master/CHANGES.rst#12-2019-10-17
+    'zope.sqlalchemy<1.2',
+    'requests',
+    'odo',
+    'wsgicors',
+    'pyramid_jsonapi',
+    'psycopg2',
+    'odo',
+    'pyramid_beaker',
+    'aiopyramid',
+    'gunicorn',
+    'ijson',
+    'transaction'
+]
 
 tests_require = [
     'WebTest >= 1.3.1',  # py3 compat
     'pytest',  # includes virtualenv
     'pytest-cov',
-    ]
+]
 
 setup(name='EDDB_JsonAPI',
-      version='0.1',
+      version='2.0.0',
       description='EDDB_JsonAPI',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[

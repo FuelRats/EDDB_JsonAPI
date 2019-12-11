@@ -8,6 +8,8 @@ import pyramid_jsonapi
 from pyramid_beaker import set_cache_regions_from_settings
 from pyramid_beaker import session_factory_from_settings
 
+__version__ = "2.0.0"
+
 
 def request_factory(environ):
     request = Request(environ)
@@ -42,6 +44,7 @@ def main(global_config, **settings):
     config.add_route('search', '/search')
     config.add_route('landmark', '/landmark')
     config.add_route('mecha', '/mecha')
+    config.add_route('version', '/version')
     config.set_request_factory(request_factory)
     pj = pyramid_jsonapi.PyramidJSONAPI(config, edsmmodels, lambda view: edsmmodels.DBSession)
     pj.create_jsonapi_using_magic_and_pixie_dust()
