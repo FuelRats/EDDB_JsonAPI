@@ -40,7 +40,7 @@ def mecha(request):
     permsystems = DBSession.query(Permits)
     perm_systems = []
     for system in permsystems:
-        perm_systems.append(system)
+        perm_systems.append(system.id64)
     name = request.params['name']
     if len(name) < 3:
         return {'meta': {'error': 'Search term too short (Min 3 characters)'}}
