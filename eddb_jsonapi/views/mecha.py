@@ -47,9 +47,9 @@ def mecha(request):
     pmatch = DBSession.query(System).filter(System.name == name)
     for candidate in pmatch:
         if candidate.id64 in perm_systems:
-            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+            candidates.append({'name': candidate.name, 'similarity': 1, 'permit_required': True})
         else:
-            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+            candidates.append({'name': candidate.name, 'similarity': 1, 'permit_required': False})
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
     # Try an indexed ilike on the name, no wildcard.
