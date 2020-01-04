@@ -48,7 +48,8 @@ def mecha(request):
     for candidate in pmatch:
         if candidate.id64 in perm_systems:
             candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
-        candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+        else:
+            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
     # Try an indexed ilike on the name, no wildcard.
@@ -58,14 +59,16 @@ def mecha(request):
     for candidate in result:
         if candidate.id64 in perm_systems:
             candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
-        candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+        else:
+            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
     if len(candidates) < 1:
         # Try an ILIKE with a wildcard at the end.
         pmatch = DBSession.query(System).filter(System.name.like(name))
         for candidate in pmatch:
             if candidate.id64 in perm_systems:
                 candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
-            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+            else:
+                candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
         if len(candidates) > 0:
             return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
         # Try a trigram similarity search if English-ish system name
@@ -76,7 +79,8 @@ def mecha(request):
                 for candidate in pmatch:
                     if candidate.id64 in perm_systems:
                         candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
-                    candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+                    else:
+                        candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
 
         else:
             # Last effort, try a dimetaphone search.
@@ -86,7 +90,8 @@ def mecha(request):
             for candidate in result:
                 if candidate.id64 in perm_systems:
                     candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
-                candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+                else:
+                    candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
     if len(candidates) < 1:
         # We ain't got shit. Give up.
         return {'meta': {'name': name, 'error': 'No hits.'}}
