@@ -37,7 +37,7 @@ def mecha(request):
     if 'name' not in request.params:
         return {'meta': {'error': 'No search term in \'name\' parameter!'}}
     candidates = []
-    permsystems = DBSession.query(Permits).All()
+    permsystems = DBSession.query(Permits)
     perm_systems = []
     for system in permsystems:
         perm_systems.append(system)
