@@ -155,5 +155,5 @@ class Landmark(Base):
 
 class Permits(Base):
     __tablename__ = 'permit_systems'
-    id64 = Column(BigInteger)
+    id64 = Column(BigInteger, primary_key=True)
 
