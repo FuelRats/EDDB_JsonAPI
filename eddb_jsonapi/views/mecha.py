@@ -58,9 +58,9 @@ def mecha(request):
     result = DBSession.execute(sql)
     for candidate in result:
         if candidate.id64 in perm_systems:
-            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+            candidates.append({'name': candidate.name, 'similarity': candidate.similarity, 'permit_required': True})
         else:
-            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+            candidates.append({'name': candidate.name, 'similarity': candidate.similarity, 'permit_required': False})
     if len(candidates) < 1:
         # Try an ILIKE with a wildcard at the end.
         pmatch = DBSession.query(System).filter(System.name.like(name))
@@ -77,10 +77,11 @@ def mecha(request):
                 filter(System.name % name).order_by(func.similarity(System.name, name).desc())
             if pmatch.count() > 0:
                 for candidate in pmatch:
-                    if candidate.id64 in perm_systems:
-                        candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+                    # candidates.append({'name': candidate[0].name, 'similarity': "1.0"}
+                    if candidate[0].id64 in perm_systems:
+                        candidates.append({'name': candidate[0].name, 'similarity': candidate[1], 'permit_required': True})
                     else:
-                        candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+                        candidates.append({'name': candidate[0].name, 'similarity': candidate[1], 'permit_required': False})
 
         else:
             # Last effort, try a dimetaphone search.
@@ -89,9 +90,9 @@ def mecha(request):
             result = DBSession.execute(sql)
             for candidate in result:
                 if candidate.id64 in perm_systems:
-                    candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+                    candidates.append({'name': candidate.name, 'similarity': candidate.similarity, 'permit_required': True})
                 else:
-                    candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+                    candidates.append({'name': candidate.name, 'similarity': candidate.similarity, 'permit_required': False})
     if len(candidates) < 1:
         # We ain't got shit. Give up.
         return {'meta': {'name': name, 'error': 'No hits.'}}
