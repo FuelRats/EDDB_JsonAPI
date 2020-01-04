@@ -7,7 +7,7 @@ from pyramid.view import (
 from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy import text, inspect, func
-from ..edsmmodels import DBSession, System
+from ..edsmmodels import DBSession, System, Permits
 
 db_err_msg = """\
 Pyramid is having a problem using your SQL database.  The problem
@@ -37,12 +37,18 @@ def mecha(request):
     if 'name' not in request.params:
         return {'meta': {'error': 'No search term in \'name\' parameter!'}}
     candidates = []
+    permsystems = DBSession.query(Permits).All()
+    perm_systems = []
+    for system in permsystems:
+        perm_systems.append(system)
     name = request.params['name']
     if len(name) < 3:
         return {'meta': {'error': 'Search term too short (Min 3 characters)'}}
     pmatch = DBSession.query(System).filter(System.name == name)
     for candidate in pmatch:
-        candidates.append({'name': candidate.name, 'similarity': '1.0'})
+        if candidate.id64 in perm_systems:
+            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+        candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
     # Try an indexed ilike on the name, no wildcard.
@@ -50,28 +56,37 @@ def mecha(request):
                f"WHERE name ILIKE '{name}' ORDER BY similarity DESC LIMIT 5")
     result = DBSession.execute(sql)
     for candidate in result:
-        candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
+        if candidate.id64 in perm_systems:
+            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+        candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
     if len(candidates) < 1:
         # Try an ILIKE with a wildcard at the end.
         pmatch = DBSession.query(System).filter(System.name.like(name))
-        for candidates in pmatch:
-            candidates.append({'name': candidate[0].name, 'similarity': "1.0"})
+        for candidate in pmatch:
+            if candidate.id64 in perm_systems:
+                candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+            candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
         if len(candidates) > 0:
-            return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
+            return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
         # Try a trigram similarity search if English-ish system name
         if len(name.split(' ')) < 2:
             pmatch = DBSession.query(System, func.similarity(System.name, name).label('similarity')).\
                 filter(System.name % name).order_by(func.similarity(System.name, name).desc())
             if pmatch.count() > 0:
                 for candidate in pmatch:
-                    candidates.append({'name': candidate[0].name, 'similarity': candidate[1]})
+                    if candidate.id64 in perm_systems:
+                        candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+                    candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+
         else:
             # Last effort, try a dimetaphone search.
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                        f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT 5")
             result = DBSession.execute(sql)
             for candidate in result:
-                candidates.append({'name': candidate.name, 'similarity': candidate.similarity})
+                if candidate.id64 in perm_systems:
+                    candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+                candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
     if len(candidates) < 1:
         # We ain't got shit. Give up.
         return {'meta': {'name': name, 'error': 'No hits.'}}

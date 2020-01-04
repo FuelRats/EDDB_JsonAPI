@@ -151,3 +151,9 @@ class Landmark(Base):
     x = Column(Float)
     y = Column(Float)
     z = Column(Float)
+
+
+class Permits(Base):
+    __tablename__ = 'permit_systems'
+    id64 = Column(BigInteger)
+
