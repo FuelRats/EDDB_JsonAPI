@@ -53,9 +53,12 @@ def mecha(request):
     if len(candidates) > 0:
         return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
     # Try an indexed ilike on the name, no wildcard.
-    sql = text(f"SELECT *, similarity(name,  '{name}') AS similarity FROM systems "
-               f"WHERE name ILIKE '{name}' ORDER BY similarity DESC LIMIT 5")
-    result = DBSession.execute(sql)
+    result = DBSession.query(System, func.similarity(System.name, name).label('similarity')).\
+        filter(System.name.ilike(name)).order_by(func.similarity(System.name, name).desc())
+
+    # sql = text(f"SELECT *, similarity(name,  '{name}') AS similarity FROM systems "
+    #           f"WHERE name ILIKE '{name}' ORDER BY similarity DESC LIMIT 5")
+    # result = DBSession.execute(sql)
     for candidate in result:
         if candidate.id64 in perm_systems:
             candidates.append({'name': candidate.name, 'similarity': candidate.similarity, 'permit_required': True})
