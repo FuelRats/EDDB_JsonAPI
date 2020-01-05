@@ -55,23 +55,20 @@ def mecha(request):
     # Try an indexed ilike on the name, no wildcard.
     result = DBSession.query(System, func.similarity(System.name, name).label('similarity')).\
         filter(System.name.ilike(name)).order_by(func.similarity(System.name, name).desc())
-
-    # sql = text(f"SELECT *, similarity(name,  '{name}') AS similarity FROM systems "
-    #           f"WHERE name ILIKE '{name}' ORDER BY similarity DESC LIMIT 5")
-    # result = DBSession.execute(sql)
     for candidate in result:
         if candidate.id64 in perm_systems:
-            candidates.append({'name': candidate.name, 'similarity': candidate.similarity, 'permit_required': True})
+            candidates.append({'name': candidate[0].name, 'similarity': candidate[1], 'permit_required': True})
         else:
-            candidates.append({'name': candidate.name, 'similarity': candidate.similarity, 'permit_required': False})
+            candidates.append({'name': candidate[0].name, 'similarity': candidate[1], 'permit_required': False})
     if len(candidates) < 1:
         # Try an ILIKE with a wildcard at the end.
-        pmatch = DBSession.query(System).filter(System.name.like(name))
+        pmatch = DBSession.query(System, func.similarity(System.name, name).label('similarity')).\
+            filter(System.name.ilike(name+"%")).order_by(func.similarity(System.name, name).desc())
         for candidate in pmatch:
             if candidate.id64 in perm_systems:
-                candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': True})
+                candidates.append({'name': candidate[0].name, 'similarity': candidate[1], 'permit_required': True})
             else:
-                candidates.append({'name': candidate.name, 'similarity': '1.0', 'permit_required': False})
+                candidates.append({'name': candidate[0].name, 'similarity': candidate[1], 'permit_required': False})
         if len(candidates) > 0:
             return {'meta': {'name': name, 'type': 'wildcard'}, 'data': candidates}
         # Try a trigram similarity search if English-ish system name
@@ -88,6 +85,7 @@ def mecha(request):
 
         else:
             # Last effort, try a dimetaphone search.
+
             sql = text(f"SELECT *, similarity(name, '{name}') AS similarity FROM systems "
                        f"WHERE dmetaphone(name) = dmetaphone('{name}') ORDER BY similarity DESC LIMIT 5")
             result = DBSession.execute(sql)
