@@ -56,7 +56,7 @@ def mecha(request):
     result = DBSession.query(System, func.similarity(System.name, name).label('similarity')).\
         filter(System.name.ilike(name)).order_by(func.similarity(System.name, name).desc())
     for candidate in result:
-        if candidate.id64 in perm_systems:
+        if candidate[0].id64 in perm_systems:
             candidates.append({'name': candidate[0].name, 'similarity': candidate[1], 'permit_required': True})
         else:
             candidates.append({'name': candidate[0].name, 'similarity': candidate[1], 'permit_required': False})
