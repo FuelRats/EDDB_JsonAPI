@@ -44,11 +44,11 @@ def main(argv=sys.argv):
     options = parse_vars(argv[2:])
     setup_logging(config_uri)
     settings = get_appsettings(config_uri, options=options)
-    serverurl = settings['xml_proxy']
-    proxy = ServerProxy(serverurl)
     engine = get_engine(settings)
     session_factory = get_session_factory(engine)
     session = get_tm_session(session_factory, transaction.manager)
+    serverurl = settings['xml_proxy'] if 'xml_proxy' in settings else 'https://irc.eu.fuelrats.com:6080/xmlrpc'
+    proxy = ServerProxy(serverurl)
 
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
