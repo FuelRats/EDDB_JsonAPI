@@ -93,8 +93,8 @@ def main(argv=sys.argv):
                 if 'event' in data:
                     if data['event'] == 'FSDJump':
                         id64 = data['SystemAddress']
-                        res = session.query(System).filter(System.id64 == id64).count()
-                        if res == 0:
+                        res = session.query(System.id64).filter(System.id64 == id64).scalar() or False
+                        if not res:
                             syscount = syscount + 1
                             newsys = System(id64=data['SystemAddress'], name=data['StarSystem'],
                                             coords=data['StarPos'], date=data['timestamp'])
@@ -103,11 +103,9 @@ def main(argv=sys.argv):
                     if data['event'] == 'Scan':
                         bodyid = data['SystemAddress'] + (data['BodyID'] << 55)
                         if 'AbsoluteMagnitude' in data:
-                            # It's a star!
-                            res = session.query(Star).filter(Star.id64 == bodyid).count()
-                            starcount = starcount + 1
-                            if res == 0:
-                                # print(f"Stardata: {data}")
+                            res = session.query(Star.id64).filter(Star.id64 == bodyid).scalar() or False
+                            if not res:
+                                starcount = starcount + 1
                                 newstar = Star(id64=bodyid, bodyId=data['BodyID'], name=data['BodyName'],
                                                age=data['Age_MY'], axialTilt=data['AxialTilt'],
                                                orbitalEccentricity=data['Eccentricity']
