@@ -78,11 +78,11 @@ def main(argv=sys.argv):
                         startot = session.query(func.count(Star.id64)).scalar()
                         systot = session.query(func.count(System.id64)).scalar()
                         proxy.command("botserv", "Absolver", f"say #ratchat [\x0315SAPI\x03] Daily report: "
-                                                             f"{':,'.format(messages)} messages processed"
-                                                             f", {':,'.format(syscount)} new systems,"
-                                                             f"  {':,'.format(starcount)} new stars."
-                                                             f" DB contains {':,'.format(startot)} stars "
-                                                             f"and {':,'.format(systot)} systems.")
+                                                             f"{'{:,}'.format(messages)} messages processed"
+                                                             f", {'{:,}'.format(syscount)} new systems,"
+                                                             f"  {'{:,}'.format(starcount)} new stars."
+                                                             f" DB contains {'{:,}'.format(startot)} stars "
+                                                             f"and {'{:,}'.format(systot)} systems.")
                         messages = 0
                         syscount = 0
                         starcount = 0
