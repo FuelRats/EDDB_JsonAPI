@@ -28,6 +28,7 @@ from eddb_jsonapi.edsmmodels import Star, System
 
 __relayEDDN = 'tcp://eddn.edcd.io:9500'
 __timeoutEDDN = 600000
+__scoopable = ['K', 'G', 'B', 'F', 'O', 'A', 'M']
 
 
 def usage(argv):
@@ -130,6 +131,8 @@ def main(argv=sys.argv):
                                                solarMasses=data['StellarMass'],
                                                subType=data['Subclass'] if 'Subclass' in data else None,
                                                surfaceTemperature=data['SurfaceTemperature'],
+                                               isScoopable=True if data['StarType'] in __scoopable else False,
+                                               isMainStar=True if data['BodyID'] == 0 else False,
                                                updateTime=data['timestamp'])
                                 session.add(newstar)
                                 print("Added new star.")
