@@ -43,6 +43,11 @@ __authorisedSoftwares   = [
     "RegulatedNoise__DJ"
 ]
 
+__allowedSchema = [
+    "https://eddn.edcd.io/schemas/journal/1"
+]
+
+
 def usage(argv):
     cmd = os.path.basename(argv[0])
     print('usage: %s <config_uri> [var=value]\n'
@@ -86,7 +91,8 @@ def main(argv=sys.argv):
 
                 __message = zlib.decompress(__message)
                 __json = simplejson.loads(__message)
-                if __json['header']['softwareName'] in __authorisedSoftwares:
+                if __json['header']['softwareName'] in __authorisedSoftwares\
+                        and __json['$schemaRef'] in __allowedSchema:
 
                     if time.time() > (starttime + 3600 * 24):
                         try:
