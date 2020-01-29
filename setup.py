@@ -51,5 +51,6 @@ setup(name='EDDB_JsonAPI',
       main = eddb_jsonapi:main
       [console_scripts]
       initialize_EDDB_JsonAPI_db = eddb_jsonapi.initdb:main
+      eddn_client = eddn_client
       """,
       )

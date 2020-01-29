@@ -6,6 +6,7 @@ from pyramid.view import (
 )
 from pyramid.response import Response
 from sqlalchemy.exc import DBAPIError
+import pyramid.httpexceptions as hex
 from sqlalchemy import text, inspect, func
 from ..edsmmodels import DBSession, System, Permits
 

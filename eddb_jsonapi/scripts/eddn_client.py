@@ -152,9 +152,13 @@ def main(argv=sys.argv):
                                                    isScoopable=True if data['StarType'] in __scoopable else False,
                                                    isMainStar=True if data['BodyID'] == 0 else False,
                                                    updateTime=data['timestamp'])
-                                    session.add(newstar)
-                                    print("Added new star.")
-                                    transaction.commit()
+                                    try:
+                                        session.add(newstar)
+                                        print("Added new star.")
+                                        transaction.commit()
+                                    except DataError:
+                                        print("Failed to add star - invalid data.")
+                                        transaction.abort()
                 sys.stdout.flush()
 
         except zmq.ZMQError as e:
