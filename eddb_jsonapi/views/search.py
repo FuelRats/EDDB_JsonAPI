@@ -90,7 +90,7 @@ def search(request):
         idjitresult = DBSession.query(System).filter(System.name == name)
         if idjitresult.count() > 0:
             for candidate in idjitresult:
-                candidates.append({'name': candidate.name, 'similarity': 'Perfect match'})
+                candidates.append({'name': candidate.name, 'similarity': 'Perfect match', 'id': candidate.id})
             return {'meta': {'name': name, 'type': 'Perfect match'}, 'data': candidates}
         # Carry on.
         result = DBSession.execute(sql)
